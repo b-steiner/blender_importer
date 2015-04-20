@@ -17,19 +17,19 @@ namespace AssetIO
 
 		const std::string& Name() const;
 
-		AIOVector3* Positions() const;
-		void Positions(AIOVector3* _value);
-		AIOVector3* Normals() const;
-		void Normals(AIOVector3* _value);
-		AIOVector4* Tangents() const;
-		void Tangents(AIOVector4* _value);
-		const std::vector<AIOVector2>& TexCoords() const;
-		void TexCoords(std::vector<AIOVector2> _value) const;
+		std::vector<AIOVector3>& Positions();
+		std::vector<AIOVector3>& Normals();
+		std::vector<AIOVector4>& Tangents();
+		std::vector<std::vector<AIOVector2>>& TexCoords();
 
-		unsigned int* Indices() const;
-		void Indices(unsigned int* _value);
+		std::vector<unsigned int>& Indices();
 
 	private:
 		std::string name;
+		std::vector<AIOVector3> positions;
+		std::vector<AIOVector3> normals;
+		std::vector<AIOVector4> tangents;
+		std::vector<unsigned int> indices;
+		std::vector<std::vector<AIOVector2>> texCoords;
 	};
 }

@@ -76,17 +76,30 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Model\AIOAnimation.hpp" />
     <ClInclude Include="Model\AIOAsset.hpp" />
+    <ClInclude Include="Model\AIOLightSource.hpp" />
     <ClInclude Include="Model\AIOMaterial.hpp" />
     <ClInclude Include="Model\AIOMatrix4.hpp" />
     <ClInclude Include="Model\AIOMesh.hpp" />
     <ClInclude Include="Model\AIONode.hpp" />
+    <ClInclude Include="Model\AIOTexture.hpp" />
     <ClInclude Include="Model\AIOVector2.hpp" />
     <ClInclude Include="Model\AIOVector3.hpp" />
     <ClInclude Include="Model\AIOVector4.hpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Model\AIOAnimation.cpp" />
     <ClCompile Include="Model\AIOAsset.cpp" />
+    <ClCompile Include="Model\AIOLightSource.cpp" />
+    <ClCompile Include="Model\AIOMaterial.cpp" />
+    <ClCompile Include="Model\AIOMatrix4.cpp" />
+    <ClCompile Include="Model\AIOMesh.cpp" />
+    <ClCompile Include="Model\AIONode.cpp" />
+    <ClCompile Include="Model\AIOTexture.cpp" />
+    <ClCompile Include="Model\AIOVector2.cpp" />
+    <ClCompile Include="Model\AIOVector3.cpp" />
+    <ClCompile Include="Model\AIOVector4.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
