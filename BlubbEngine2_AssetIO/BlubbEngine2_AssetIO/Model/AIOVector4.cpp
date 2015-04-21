@@ -30,4 +30,5 @@ AIOVector4& AIOVector4::operator=(const AIOVector4& _other)
 	values[1] = _other.Values()[1];
 	values[2] = _other.Values()[2];
 	values[3] = _other.Values()[3];
+	return *this;
 }

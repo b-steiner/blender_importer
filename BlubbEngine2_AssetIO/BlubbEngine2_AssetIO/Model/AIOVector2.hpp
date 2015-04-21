@@ -1,8 +1,10 @@
 #pragma once
 
+#include "../dllconfig.hpp"
+
 namespace AssetIO
 {
-	class AIOVector2
+	class _AIO_DECLSPEC AIOVector2
 	{
 	public:
 		AIOVector2(float _x, float _y);
@@ -15,5 +17,5 @@ namespace AssetIO
 
 	private:
 		float values[2];
-	}
+	};
 }

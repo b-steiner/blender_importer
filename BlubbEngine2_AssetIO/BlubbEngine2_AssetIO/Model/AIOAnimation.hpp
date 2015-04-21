@@ -1,5 +1,7 @@
 #pragma once
 
+#include "../dllconfig.hpp"
+
 #include <string>
 #include <vector>
 
@@ -19,7 +21,7 @@ namespace AssetIO
 		SizeX, SizeY, SizeZ
 	};
 
-	class AIOAnimation
+	class _AIO_DECLSPEC AIOAnimation
 	{
 	public:
 		AIOAnimation(const std::string& _name);

@@ -3,6 +3,7 @@
 #include <string>
 #include <unordered_map>
 
+#include "../dllconfig.hpp"
 #include "AIOTexture.hpp"
 #include "AIOVector3.hpp"
 
@@ -15,7 +16,7 @@ namespace AssetIO
 		Shadeless
 	};
 
-	class AIOMaterial
+	class _AIO_DECLSPEC AIOMaterial
 	{
 	public:
 		AIOMaterial(const std::string& _name);

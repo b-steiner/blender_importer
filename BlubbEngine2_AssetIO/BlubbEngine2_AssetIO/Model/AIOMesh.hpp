@@ -3,13 +3,14 @@
 #include <string>
 #include <vector>
 
+#include "../dllconfig.hpp"
 #include "AIOVector2.hpp"
 #include "AIOVector3.hpp"
 #include "AIOVector4.hpp"
 
 namespace AssetIO
 {
-	class AIOMesh
+	class _AIO_DECLSPEC AIOMesh
 	{
 	public:
 		AIOMesh(const std::string& _name);

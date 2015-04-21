@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../dllconfig.hpp"
 #include <string>
 
 namespace AssetIO
@@ -14,7 +15,7 @@ namespace AssetIO
 		Linear, SRGB, Other
 	};
 
-	class AIOTexture
+	class _AIO_DECLSPEC AIOTexture
 	{
 	public:
 		AIOTexture();

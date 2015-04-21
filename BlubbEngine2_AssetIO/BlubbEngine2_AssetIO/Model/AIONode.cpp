@@ -51,7 +51,11 @@ void AIONode::LightSource(AIOLightSource* _value)
 
 const AIOMatrix4& AIONode::Matrix() const
 {
-	
+	return matrix;
+}
+void AIONode::Matrix(const AIOMatrix4& _value)
+{
+	matrix = _value;
 }
 const AIOVector3 AIONode::Translation() const
 {

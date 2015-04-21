@@ -1,5 +1,6 @@
 #pragma once
 
+#include "../dllconfig.hpp"
 #include "AIOVector3.hpp"
 
 namespace AssetIO
@@ -11,7 +12,7 @@ namespace AssetIO
 		DirectionalLight
 	};
 
-	class AIOLightSource
+	class _AIO_DECLSPEC AIOLightSource
 	{
 	public:
 		AIOLightSource();

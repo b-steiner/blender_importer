@@ -1,12 +1,15 @@
 #pragma once
 
+#include "../dllconfig.hpp"
+
 namespace AssetIO
 {
 	int IDX2(int _column, int _row);
 
-	class AIOMatrix4
+	class _AIO_DECLSPEC AIOMatrix4
 	{
 	public:
+		AIOMatrix4();
 		AIOMatrix4(const float* _values);
 		AIOMatrix4(const AIOMatrix4& _other);
 		~AIOMatrix4();

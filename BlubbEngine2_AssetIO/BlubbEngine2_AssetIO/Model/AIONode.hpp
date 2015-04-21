@@ -3,6 +3,7 @@
 #include <string>
 #include <vector>
 
+#include "../dllconfig.hpp"
 #include "AIOMatrix4.hpp"
 #include "AIOVector3.hpp"
 #include "AIOMesh.hpp"
@@ -12,7 +13,7 @@
 
 namespace AssetIO
 {
-	class AIONode
+	class _AIO_DECLSPEC AIONode
 	{
 	public:
 		AIONode(const std::string& _name);
@@ -31,6 +32,7 @@ namespace AssetIO
 		void LightSource(AIOLightSource* _value);
 
 		const AIOMatrix4& Matrix() const;
+		void Matrix(const AIOMatrix4& _value);
 		const AIOVector3 Translation() const;
 		void Translation(const AIOVector3& _value);
 		const AIOVector3 Scale() const;
@@ -46,6 +48,7 @@ namespace AssetIO
 		AIOMaterial* material;
 		AIOAnimation* animation;
 		AIOLightSource* lightsource;
+		AIOMatrix4 matrix;
 		AIOVector3 translation;
 		AIOVector3 scale;
 		AIOVector3 rotation;

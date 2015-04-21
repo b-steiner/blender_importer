@@ -9,6 +9,11 @@ int IDX2(int _column, int _row)
 	return 4 * _column + _row;
 }
 
+AIOMatrix4::AIOMatrix4()
+{
+	for (int i = 0; i < 16; i++)
+		values[i] = 0;
+}
 AIOMatrix4::AIOMatrix4(const float* _values)
 {
 	memcpy(Values(), _values, 16 * sizeof(float));
@@ -28,4 +33,5 @@ float* AIOMatrix4::Values() const
 AIOMatrix4& AIOMatrix4::operator=(const AIOMatrix4& _other)
 {
 	memcpy(Values(), _other.Values(), 16 * sizeof(float));
+	return *this;
 }

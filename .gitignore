@@ -1,2 +1,5 @@
 *.sdf
 *.suo
+bin
+build
+/BlubbEngine2_AssetIO/TestData/output.xml
