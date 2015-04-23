@@ -105,6 +105,7 @@
     <ClCompile Include="Model\AIOException.cpp" />
     <ClCompile Include="Model\AIOLightSource.cpp" />
     <ClCompile Include="Model\AIOMaterial.cpp" />
+    <ClCompile Include="Model\AIOMatrix3.cpp" />
     <ClCompile Include="Model\AIOMatrix4.cpp" />
     <ClCompile Include="Model\AIOMesh.cpp" />
     <ClCompile Include="Model\AIONode.cpp" />

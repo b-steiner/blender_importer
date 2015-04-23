@@ -20,7 +20,7 @@ std::vector<AIOVector3>& AIOMesh::Normals()
 {
 	return normals;
 }
-std::vector<AIOVector4>& AIOMesh::Tangents()
+std::vector<std::vector<AIOVector4>>& AIOMesh::Tangents()
 {
 	return tangents;
 }

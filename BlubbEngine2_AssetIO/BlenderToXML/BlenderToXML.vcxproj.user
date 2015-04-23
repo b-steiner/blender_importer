@@ -4,11 +4,11 @@
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>..\TestData\Simple_Scene_257_x32.blend ..\TestData\output.xml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>..\TestData\Simple_Scene_269_x64.blend ..\TestData\output2.xml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
-    <LocalDebuggerCommandArguments>..\TestData\Simple_Scene_257_x32.blend ..\TestData\output.xml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>..\TestData\Simple_Scene_269_x64.blend ..\TestData\output2.xml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
 </Project>

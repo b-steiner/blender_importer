@@ -20,7 +20,7 @@ namespace AssetIO
 
 		std::vector<AIOVector3>& Positions();
 		std::vector<AIOVector3>& Normals();
-		std::vector<AIOVector4>& Tangents();
+		std::vector<std::vector<AIOVector4>>& Tangents();
 		std::vector<std::vector<AIOVector2>>& TexCoords();
 
 		std::vector<unsigned int>& Indices();
@@ -29,7 +29,7 @@ namespace AssetIO
 		std::string name;
 		std::vector<AIOVector3> positions;
 		std::vector<AIOVector3> normals;
-		std::vector<AIOVector4> tangents;
+		std::vector<std::vector<AIOVector4>> tangents;
 		std::vector<unsigned int> indices;
 		std::vector<std::vector<AIOVector2>> texCoords;
 	};
