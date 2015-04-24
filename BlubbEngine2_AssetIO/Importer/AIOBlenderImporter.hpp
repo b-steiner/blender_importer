@@ -33,6 +33,7 @@ namespace AssetIO
 		AIONode* ParseNode(char* _ptr);
 		AIOMesh* ParseMesh(uint64_t _ptr);
 		AIOMaterial* ParseMaterial(uint64_t _ptr);
+		AIOLightSource* ParseLightSource(uint64_t _ptr);
 
 		std::string KeyFromVertex(AIOVector3 _position, AIOVector3 _normal, AIOVector2 _uv);
 		void CalculateTangents(AIOMesh* _mesh);
@@ -81,7 +82,10 @@ namespace AssetIO
 		std::vector<std::vector<uint32_t>> sdnaArrayLength;
 		std::vector<uint16_t> sdnaTypeSizes;
 
-		//Cache
-		std::unordered_map<std::string, AIOMesh*> meshes;
+		std::vector<char*> objectBlocks;
+		std::vector<uint64_t> objectParentAddr;
+
+		std::string filePath;
+		AIOAsset* asset;
 	};
 }

@@ -7,8 +7,12 @@
 
 namespace AssetIO
 {
+	class AIOBlenderImporter;
+
 	class _AIO_DECLSPEC AIOAsset
 	{
+		friend AIOBlenderImporter;
+
 	public:
 		AIOAsset(const std::string& _path);
 		~AIOAsset();
@@ -21,5 +25,9 @@ namespace AssetIO
 		std::string path;
 		std::vector<AIONode*> nodes;
 
+		//Cache
+		std::unordered_map<std::string, AIOMesh*> meshes;
+		std::unordered_map<std::string, AIOMaterial*> materials;
+		std::unordered_map<std::string, AIOTexture*> textures;
 	};
 }

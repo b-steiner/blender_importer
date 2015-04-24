@@ -10,15 +10,18 @@
 #include <unordered_map>
 #include <sstream>
 #include <iomanip>
+#include <algorithm>
 
 using namespace AssetIO;
 
-AIOBlenderImporter::AIOBlenderImporter()
+AIOBlenderImporter::AIOBlenderImporter() : data(nullptr)
 { }
 AIOBlenderImporter::~AIOBlenderImporter()
 {
 	for (auto str : sdna)
 		delete str.second;
+	if (data != nullptr)
+		delete data;
 }
 
 AIOAsset* AIOBlenderImporter::Load(const std::string& _path)
@@ -227,72 +230,85 @@ uint64_t AIOBlenderImporter::Value2XML(char* _ptr, uint16_t _typeIdx, uint16_t _
 
 void AIOBlenderImporter::LoadFile(const std::string& _path)
 {
-	FILE* file = fopen(_path.c_str(), "rb");
-	if (file == nullptr)
-		throw AIOException("Unable to open file");
-
-	fseek(file, 0, SEEK_END);
-	dataSize = ftell(file);
-	fseek(file, 0, SEEK_SET);
-
-	data = new char[dataSize];
-	fread(data, dataSize, 1, file);
-	fclose(file);
-	file = nullptr;
-
-	//Parse header
-
-	//Ident
-	memcpy(ident, data, 7);
-	ident[7] = '\0';
-	if (strcmp(ident, "BLENDER") != 0)
-		throw AIOException(std::string("File Identifier has to be \"BLENDER\", but was ") + std::string(ident));
-
-	//Ptr Size
-	ptrChar = data[7];
-	if (ptrChar == '_')
-		ptrSize = 4;
-	else if (ptrChar == '-')
-		ptrSize = 8;
-	else
-		throw AIOException("PointerSize was not \'-\' or \'_\'");
-
-	endianness = data[8];
-	memcpy(versionNumber, data + 9, 3);
-	versionNumber[3] = '\0';
-	
-	versionInt = 0;
-	for (int i = 0; i < 3; i++)
-		versionInt += versionNumber[i] * (int)powl(10, 2-i);
-
-	//Go over all fileblocks
-	char* ptr = data + 12; // Start of first fileblock
-
-	while (ptr < data + dataSize)
+	if (_path != filePath)
 	{
-		//Always start at 4-byte alignment
-		if ((uint64_t)ptr % 4 != 0)
-			ptr += 4 - ((uint64_t)ptr % 4);
+		sdna.clear();
+		sdnaTypes.clear();
+		sdnaIsPointer.clear();
+		sdnaArrayLength.clear();
+		sdnaTypeSizes.clear();
+		addressToFileblock.clear();
+		nameToSDNAIdx.clear();
 
-		//Read header (everything we need at the moment
-		char code[5];
-		code[4] = '\0';
-		memcpy(code, ptr, 4);
-		
-		uint32_t size = R<uint32_t>(ptr + 4);
-		uint64_t oldAddress = RPtr(ptr + 8);
-		uint32_t count = R<uint32_t>(ptr + 12 + ptrSize);
+		FILE* file = fopen(_path.c_str(), "rb");
+		if (file == nullptr)
+			throw AIOException("Unable to open file");
 
-		if (strcmp(code, "DNA1") == 0)
-			ParseSDNABlock(ptr);
+		fseek(file, 0, SEEK_END);
+		dataSize = ftell(file);
+		fseek(file, 0, SEEK_SET);
+
+		if (data != nullptr)
+			delete data;
+		data = new char[dataSize];
+		fread(data, dataSize, 1, file);
+		fclose(file);
+		file = nullptr;
+
+		//Parse header
+
+		//Ident
+		memcpy(ident, data, 7);
+		ident[7] = '\0';
+		if (strcmp(ident, "BLENDER") != 0)
+			throw AIOException(std::string("File Identifier has to be \"BLENDER\", but was ") + std::string(ident));
+
+		//Ptr Size
+		ptrChar = data[7];
+		if (ptrChar == '_')
+			ptrSize = 4;
+		else if (ptrChar == '-')
+			ptrSize = 8;
 		else
-		{
-			addressToFileblock[oldAddress] = ptr;
-		}
+			throw AIOException("PointerSize was not \'-\' or \'_\'");
 
-		//To next block
-		ptr += (16 + ptrSize);
-		ptr += size;
+		endianness = data[8];
+		memcpy(versionNumber, data + 9, 3);
+		versionNumber[3] = '\0';
+
+		versionInt = 0;
+		for (int i = 0; i < 3; i++)
+			versionInt += (versionNumber[i] - '0') * (int)powl(10, 2 - i);
+
+		//Go over all fileblocks
+		char* ptr = data + 12; // Start of first fileblock
+
+		while (ptr < data + dataSize)
+		{
+			//Always start at 4-byte alignment
+			if ((uint64_t)ptr % 4 != 0)
+				ptr += 4 - ((uint64_t)ptr % 4);
+
+			//Read header (everything we need at the moment
+			char code[5];
+			code[4] = '\0';
+			memcpy(code, ptr, 4);
+
+			uint32_t size = R<uint32_t>(ptr + 4);
+			uint64_t oldAddress = RPtr(ptr + 8);
+			uint32_t count = R<uint32_t>(ptr + 12 + ptrSize);
+
+			if (strcmp(code, "DNA1") == 0)
+				ParseSDNABlock(ptr);
+			else
+			{
+				addressToFileblock[oldAddress] = ptr;
+			}
+
+			//To next block
+			ptr += (16 + ptrSize);
+			ptr += size;
+		}
 	}
 }
 void AIOBlenderImporter::ParseSDNABlock(char* _ptr)
@@ -458,9 +474,12 @@ void AIOBlenderImporter::ParseSDNABlock(char* _ptr)
 
 AIOAsset* AIOBlenderImporter::ParseAsset(const std::string& _path)
 {
-	AIOAsset* asset = new AIOAsset(_path);
+	asset = new AIOAsset(_path);
 
 	auto objectId = nameToSDNAIdx["Object"];
+	SDNAStructure* objectStrc = sdna[objectId];
+	objectBlocks.clear();
+	objectParentAddr.clear();
 
 	//Find all nodes
 	for (auto fb : addressToFileblock)
@@ -468,13 +487,23 @@ AIOAsset* AIOBlenderImporter::ParseAsset(const std::string& _path)
 		uint32_t sdnaIdx = R<uint32_t>(fb.second + 8 + ptrSize);
 
 		if (sdnaIdx == objectId)
-			asset->Nodes().push_back(ParseNode(fb.second));
+		{
+			objectBlocks.push_back(fb.second);
+			objectParentAddr.push_back(RPtr(fb.second + 16 + ptrSize + objectStrc->Fields()["*parent"]->Offset()));
+		}
+	}
+
+	for (int i = 0; i < objectBlocks.size(); i++)
+	{
+		if (objectParentAddr[i] == 0)
+			asset->Nodes().push_back(ParseNode(objectBlocks[i]));
 	}
 
 	return asset;
 }
 AIONode* AIOBlenderImporter::ParseNode(char* _ptr)
 {
+	uint64_t addr = RPtr(_ptr + 8);
 	char* data = _ptr + 16 + ptrSize;
 
 	auto sdnaIdx = nameToSDNAIdx["Object"];
@@ -558,8 +587,15 @@ AIONode* AIOBlenderImporter::ParseNode(char* _ptr)
 			node->Material(ParseMaterial(dataPtr));
 			break;
 		case 10: //Lamp
+			node->LightSource(ParseLightSource(dataPtr));
 			break;
 		}
+	}
+
+	for (int i = 0; i < objectBlocks.size(); i++)
+	{
+		if (objectParentAddr[i] == addr)
+			node->Nodes().push_back(ParseNode(objectBlocks[i]));
 	}
 
 	return node;
@@ -574,8 +610,8 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 
 	std::string name = std::string(ptr + strc->Fields()["id"]->Offset() + idstrc->Fields()["name"]->Offset() + 2);
 
-	auto meshIt = meshes.find(name);
-	if (meshIt != meshes.end())
+	auto meshIt = asset->meshes.find(name);
+	if (meshIt != asset->meshes.end())
 		return meshIt->second;
 
 	//Not found -> load it
@@ -600,20 +636,20 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 	positions = new AIOVector3[vertexCount];
 	normals = new AIOVector3[vertexCount];
 
-	char* mvertBlock = addressToFileblock[RPtr(ptr + strc->Fields()["*mvert"]->Offset())] + 16 + ptrSize;
+	char* mvertPtr = addressToFileblock[RPtr(ptr + strc->Fields()["*mvert"]->Offset())] + 16 + ptrSize;
 	uint32_t mvertSize = sdnaTypeSizes[strc->Fields()["*mvert"]->TypeIdx()];
 	SDNAStructure* mvertstrc = sdna[nameToSDNAIdx["MVert"]];
 
 	for (unsigned int i = 0; i < vertexCount; i++)
 	{
-		positions[i] = AIOVector3((float*)(ptr + mvertSize * i + mvertstrc->Fields()["co"]->Offset()));
-		int16_t* noPtr = (int16_t*)(ptr + mvertSize * i + mvertstrc->Fields()["no"]->Offset());
+		positions[i] = AIOVector3((float*)(mvertPtr + mvertSize * i + mvertstrc->Fields()["co"]->Offset()));
+		int16_t* noPtr = (int16_t*)(mvertPtr + mvertSize * i + mvertstrc->Fields()["no"]->Offset());
 		int32_t li = noPtr[0] * noPtr[0] + noPtr[1] * noPtr[1] + noPtr[2] * noPtr[2];
 		double l = sqrt((double)li);
 		normals[i] = AIOVector3((float)(((double)noPtr[0]) / l), (float)(((double)noPtr[1]) / l), (float)(((double)noPtr[2]) / l));
 	}
 
-	#pragma region Face Information < 236
+	#pragma region Face Information < 263
 
 	if (versionInt < 263)
 	{
@@ -681,37 +717,39 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 			}
 
 			//Calculate face normal + read face flag
-			faceNormals[i] = AIOVector3::Cross(AIOVector3::Normalize(positions[indices[i * 4 + 1]] - positions[indices[i * 4]]),
-				AIOVector3::Normalize(positions[indices[i * 4 + 2]] - positions[indices[i * 4]]));
+			faceNormals[i] = AIOVector3::Normalize(AIOVector3::Cross(AIOVector3::Normalize(positions[indices[i * 4 + 1]] - positions[indices[i * 4]]),
+				AIOVector3::Normalize(positions[indices[i * 4 + 2]] - positions[indices[i * 4]])));;
 			faceFlags[i] = R<char>(mfacePtr + i * mfaceSize + mfaceStrc->Fields()["flag"]->Offset());
 		}
 
 	}
 
 	#pragma endregion
-	#pragma region Face Information >= 236
+	#pragma region Face Information >= 263
 
-	if (versionInt >= 236)
+	else if (versionInt >= 263)
 	{
 		faceCount = R<uint32_t>(ptr + strc->Fields()["totpoly"]->Offset());
 
-		char* mpolyPtr = addressToFileblock[RPtr(ptr + strc->Fields()["mpoly"]->Offset())] + 16 + ptrSize;
-		char* mloopPtr = addressToFileblock[RPtr(ptr + strc->Fields()["mloop"]->Offset())] + 16 + ptrSize;
+		char* mpolyPtr = addressToFileblock[RPtr(ptr + strc->Fields()["*mpoly"]->Offset())] + 16 + ptrSize;
+		char* mloopPtr = addressToFileblock[RPtr(ptr + strc->Fields()["*mloop"]->Offset())] + 16 + ptrSize;
 
-		uint64_t mloopuvAddr = RPtr(ptr + strc->Fields()["mloopuv"]->Offset());
+		uint64_t mloopuvAddr = RPtr(ptr + strc->Fields()["*mloopuv"]->Offset());
 		char* mloopuvPtr = nullptr;
 		if (mloopuvAddr != 0)
 		{
 			mloopuvPtr = addressToFileblock[mloopuvAddr] + 16 + ptrSize;
 			hasUvs = true;
 		}
-		uint64_t mpolySize = sdnaTypeSizes[strc->Fields()["mpoly"]->TypeIdx()];
-		uint64_t mloopSize = sdnaTypeSizes[strc->Fields()["mloop"]->TypeIdx()];
-		uint64_t mloopuvSize = sdnaTypeSizes[strc->Fields()["mloopuv"]->TypeIdx()];
+		uint64_t mpolySize = sdnaTypeSizes[strc->Fields()["*mpoly"]->TypeIdx()];
+		uint64_t mloopSize = sdnaTypeSizes[strc->Fields()["*mloop"]->TypeIdx()];
+		uint64_t mloopuvSize = sdnaTypeSizes[strc->Fields()["*mloopuv"]->TypeIdx()];
 
 		indices.reserve(faceCount * 3);
 		faceNormals = new AIOVector3[faceCount];
 		faceFlags = new char[faceCount];
+		faceStart = new unsigned int[faceCount];
+		faceLength = new unsigned int[faceCount];
 		if (hasUvs)
 			faceUvs.push_back(std::vector<AIOVector2>(faceCount * 4));
 
@@ -724,10 +762,12 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 		for (int face = 0; face < faceCount; face++)
 		{
 			char* mpolyFaceStart = mpolyPtr + mpolySize * face;
-			char* mloopFaceStart = mloopPtr + mloopSize * face;
 
 			int loopStart = R<uint32_t>(mpolyFaceStart + mpolyStrc->Fields()["loopstart"]->Offset());
 			int loopLength = R<uint32_t>(mpolyFaceStart + mpolyStrc->Fields()["totloop"]->Offset());
+
+			char* mloopFaceStart = mloopPtr + mloopSize * loopStart;
+			char* mloopuvFaceStart = mloopuvPtr + mloopuvSize * loopStart;
 
 			triangles += (loopLength - 2);
 
@@ -741,9 +781,12 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 
 				if (hasUvs)
 				{
-					float* mloopuvFaceStart = (float*)(mloopuvPtr + mloopuvSize * face + mloopuvStrc->Fields()["uv"]->Offset());
-					faceUvs[0].push_back(AIOVector2(mloopuvFaceStart[0], mloopuvFaceStart[1]));
+					float* uv = (float*)(mloopuvFaceStart + mloopuvStrc->Fields()["uv"]->Offset());
+					faceUvs[0].push_back(AIOVector2(uv[0], uv[1]));
 				}
+
+				mloopFaceStart += mloopSize;
+				mloopuvFaceStart += mloopuvSize;
 			}
 
 			//Face normal
@@ -751,10 +794,10 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 			faceNormals[face] = AIOVector3();
 			while (faceNormals[face].Length() <= 0.0001 && first < loopLength - 2)
 			{
-				faceNormals[face] = AIOVector3::Cross(
+				faceNormals[face] = AIOVector3::Normalize(AIOVector3::Cross(
 					AIOVector3::Normalize(positions[indices[faceStart[face] + 1]] - positions[indices[faceStart[face]]]),
 					AIOVector3::Normalize(positions[indices[faceStart[face] + 2]] - positions[indices[faceStart[face]]])
-					);
+					));
 				first++;
 			}
 
@@ -768,10 +811,14 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 	#pragma region Triangulation & Indices
 
 	std::unordered_map < std::string, unsigned int > vertexDictionary;
-	std::vector<AIOVector3> indPositions(triangles * 3);
-	std::vector<AIOVector3> indNormals(triangles * 3);
-	std::vector<AIOVector2> indUVs(triangles * 3);
-	std::vector<unsigned int> indIndices(triangles * 3);
+	std::vector<AIOVector3> indPositions;
+	indPositions.reserve(triangles * 3);
+	std::vector<AIOVector3> indNormals;
+	indNormals.reserve(triangles * 3);
+	std::vector<AIOVector2> indUVs;
+	indUVs.reserve(triangles * 3);
+	std::vector<unsigned int> indIndices;
+	indIndices.reserve(triangles * 3);
 	std::vector<unsigned int> indexCache;
 
 	for (int face = 0; face < faceCount; face++)
@@ -814,7 +861,7 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 			for (unsigned int findex = 1; findex < faceLength[face] - 1; findex++)
 			{
 				int i1 = (startIndex + findex) % faceLength[face];
-				int i2 = (startIndex + findex + 2) % faceLength[face];
+				int i2 = (startIndex + findex + 1) % faceLength[face];
 
 				AIOVector3 p1 = indPositions[indexCache[startIndex]];
 				AIOVector3 p2 = indPositions[indexCache[i1]];
@@ -825,6 +872,7 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 				if (mag < 0.000001)
 				{
 					isDegenerated = true;
+					startIndex++;
 					break;
 				}
 			}
@@ -834,7 +882,7 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 		for (unsigned int findex = 1; findex < faceLength[face] - 1; findex++)
 		{
 			int i1 = (startIndex + findex) % faceLength[face];
-			int i2 = (startIndex + findex + 2) % faceLength[face];
+			int i2 = (startIndex + findex + 1) % faceLength[face];
 
 			indIndices.push_back(indexCache[startIndex]);
 			indIndices.push_back(indexCache[i1]);
@@ -856,20 +904,190 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 		CalculateTangents(mesh);
 	}
 
-	meshes[mesh->Name()] = mesh;
+	asset->meshes[mesh->Name()] = mesh;
 
 	return mesh;
 }
 AIOMaterial* AIOBlenderImporter::ParseMaterial(uint64_t _ptr)
 {
-	return new AIOMaterial("default-material");
+	SDNAStructure* matStrc = sdna[nameToSDNAIdx["Material"]];
+	SDNAStructure* idStrc = sdna[nameToSDNAIdx["ID"]];
+	SDNAStructure* meshStrc = sdna[nameToSDNAIdx["Mesh"]];
+	SDNAStructure* mtexStrc = sdna[nameToSDNAIdx["MTex"]];
+	SDNAStructure* texStrc = sdna[nameToSDNAIdx["Tex"]];
+	SDNAStructure* imaStrc = sdna[nameToSDNAIdx["Image"]];
+	SDNAStructure* linkStrc = sdna[nameToSDNAIdx["Link"]];
+
+	char* meshPtr = addressToFileblock[_ptr] + 16 + ptrSize;
+	uint64_t matLinkAddr = RPtr(meshPtr + meshStrc->Fields()["**mat"]->Offset());
+	
+	if (matLinkAddr == 0)
+		return asset->materials["default-material"];
+
+	char* matLinkPtr = addressToFileblock[matLinkAddr] + 16 + ptrSize;
+	uint64_t matAddr = RPtr(matLinkPtr + linkStrc->Fields()["*next"]->Offset());
+
+	if (matAddr == 0)
+		return asset->materials["default-material"];
+
+	char* matPtr = addressToFileblock[matAddr] + 16 + ptrSize;
+	std::string name(matPtr + matStrc->Fields()["id"]->Offset() + idStrc->Fields()["name"]->Offset());
+
+	auto matit = asset->materials.find(name);
+	if (matit != asset->materials.end())
+		return matit->second;
+
+	//Not cached -> load
+	AIOMaterial* material = new AIOMaterial(name);
+	asset->materials[name] = material;
+
+	material->DiffuseColor(AIOVector3(
+		R<float>(matPtr + matStrc->Fields()["r"]->Offset()),
+		R<float>(matPtr + matStrc->Fields()["g"]->Offset()),
+		R<float>(matPtr + matStrc->Fields()["b"]->Offset())));
+	material->SpecularColor(AIOVector3(
+		R<float>(matPtr + matStrc->Fields()["specr"]->Offset()),
+		R<float>(matPtr + matStrc->Fields()["specg"]->Offset()),
+		R<float>(matPtr + matStrc->Fields()["specb"]->Offset())));
+	material->DiffuseIntensity(R<float>(matPtr + matStrc->Fields()["ref"]->Offset()));
+	material->SpecularIntensity(R<float>(matPtr + matStrc->Fields()["spec"]->Offset()));
+	material->EmittingIntensity(R<float>(matPtr + matStrc->Fields()["emit"]->Offset()));
+	material->Opacity(R<float>(matPtr + matStrc->Fields()["alpha"]->Offset()));
+	material->Hardness(R<uint16_t>(matPtr + matStrc->Fields()["har"]->Offset()));
+
+	int mode = R<uint32_t>(matPtr + matStrc->Fields()["mode"]->Offset());
+	AIOMaterialMode matMode = AIOMaterialMode::None;
+	if ((mode & 0x4) != 0)
+		matMode = matMode | AIOMaterialMode::Shadeless;
+	if ((mode & 0x4) != 0)
+		matMode = matMode | AIOMaterialMode::Shadeless;
+	material->Mode(matMode);
+
+	uint32_t mtexLength = sdnaArrayLength[matStrc->Fields()["*mtex"]->NameIdx()][0];
+	char* mtexStart = matPtr + matStrc->Fields()["*mtex"]->Offset();
+
+	for (unsigned int mtexId = 0; mtexId < mtexLength; mtexId++)
+	{
+		uint64_t mtexAddr = RPtr(mtexStart);
+
+		if (mtexAddr != 0)
+		{
+			char* mtexPtr = addressToFileblock[mtexAddr] + 16 + ptrSize;
+			uint64_t texAddr = RPtr(mtexPtr + mtexStrc->Fields()["*tex"]->Offset());
+
+			if (texAddr != 0)
+			{
+				char* texPtr = addressToFileblock[texAddr] + 16 + ptrSize;
+				uint64_t imaAddr = RPtr(texPtr + texStrc->Fields()["*ima"]->Offset());
+
+				if (imaAddr != 0)
+				{
+					//Image texture
+					char* imaPtr = addressToFileblock[imaAddr] + 16 + ptrSize;
+					std::string path(imaPtr + imaStrc->Fields()["name"]->Offset() + 2);
+					std::replace(path.begin(), path.end(), '\\', '/');
+
+					if (path[0] != '/' && path.find(':') == path.npos) // add filename to path if not absolute
+						path = filePath.substr(0, filePath.find_last_of('/')) + "/" + path;
+
+					auto texit = asset->textures.find(path);
+					AIOTexture* texture = nullptr;
+					if (texit != asset->textures.end())
+						texture = texit->second;
+					else
+					{
+						texture = new AIOTexture();
+						texture->Path(path);
+						asset->textures[path] = texture;
+
+						if (versionInt > 263)
+						{
+							SDNAStructure* colorspaceStrc = sdna[nameToSDNAIdx["ColorManagedColorspaceSettings"]];
+							std::string colorspace(imaPtr + imaStrc->Fields()["colorspace_settings"]->Offset() + colorspaceStrc->Fields()["name"]->Offset());
+
+							if (colorspace == "sRGB")
+								texture->ColorSpace(AIOColorSpace::SRGB);
+							else if (colorspace == "Linear")
+								texture->ColorSpace(AIOColorSpace::Linear);
+							else
+								texture->ColorSpace(AIOColorSpace::Other);
+						}
+						else
+							texture->ColorSpace(AIOColorSpace::SRGB);
+					}
+
+					uint16_t mapTo = R<uint16_t>(mtexPtr + mtexStrc->Fields()["mapto"]->Offset());
+					if ((mapTo & 0x01) != 0)
+						material->Textures()[AIOMappingTarget::Diffuse] = texture;
+					if ((mapTo & 0x02) != 0)
+						material->Textures()[AIOMappingTarget::Normals] = texture;
+				}
+				else
+				{
+					std::cout << "Material " << name << " contains an unsupported texture, skipping it" << std::endl;
+				}
+			}
+		}
+
+		mtexStart += ptrSize;
+	}
+
+
+	return material;
+}
+AIOLightSource* AIOBlenderImporter::ParseLightSource(uint64_t _ptr)
+{
+	SDNAStructure* lampStrc = sdna[nameToSDNAIdx["Lamp"]];
+	char* lampPtr = addressToFileblock[_ptr] + 16 + ptrSize;
+	AIOLightSource* light = new AIOLightSource();
+
+	uint16_t type = R<uint16_t>(lampPtr + lampStrc->Fields()["type"]->Offset());
+
+	switch (type)
+	{
+	case 0:
+		light->Type(AIOLightSourceType::PointLight);
+		break;
+	case 1:
+		light->Type(AIOLightSourceType::DirectionalLight);
+		break;
+	case 2:
+		light->Type(AIOLightSourceType::SpotLight);
+		break;
+	}
+
+	light->Color(AIOVector3(
+		R<float>(lampPtr + lampStrc->Fields()["r"]->Offset()),
+		R<float>(lampPtr + lampStrc->Fields()["g"]->Offset()),
+		R<float>(lampPtr + lampStrc->Fields()["b"]->Offset())));
+	light->Intensity(R<float>(lampPtr + lampStrc->Fields()["energy"]->Offset()));
+	light->AngularAttenuation(R<float>(lampPtr + lampStrc->Fields()["spotblend"]->Offset()));
+	light->Angle(R<float>(lampPtr + lampStrc->Fields()["spotsize"]->Offset()) / 180.0f * (float)M_PI / 2.0f);
+
+	float dist = R<float>(lampPtr + lampStrc->Fields()["dist"]->Offset());
+	uint16_t falloffType = R<uint16_t>(lampPtr + lampStrc->Fields()["falloff_type"]->Offset());
+
+	switch (falloffType)
+	{
+	case 1:
+		light->Attenuation(AIOVector3(1.0f, 1.0f / dist, 0.0f));
+		break;
+	case 2:
+		light->Attenuation(AIOVector3(1.0f, 0.0f, 1.0f / (dist * dist)));
+		break;
+	default:
+		light->Attenuation(AIOVector3(1.0f, 0.0f, 0.0f));
+		break;
+	}
+
+	return light;
 }
 
 std::string AIOBlenderImporter::KeyFromVertex(AIOVector3 _position, AIOVector3 _normal, AIOVector2 _uv)
 {
 	std::stringstream ss;
 	ss << std::fixed << std::setprecision(4) << _position.X() << ";" << _position.Y() << ";" << _position.Z() << ";" << _normal.X() << ";" << _normal.Y() << ";" << _normal.Z()
-		<< _uv.X() << ";" << _uv.Y();
+		<< ";" << _uv.X() << "; " << _uv.Y();
 	return ss.str();
 }
 void AIOBlenderImporter::CalculateTangents(AIOMesh* _mesh)
@@ -938,7 +1156,7 @@ bool AIOBlenderImporter::CheckStructure(const std::string& _path)
 	LoadFile(_path);
 	bool result = true;
 
-	std::cout << "Checking Version " << versionNumber << std::endl;
+	std::cout << "Checking Version " << versionNumber << " (x" << ptrSize * 8 << ")";
 
 	result &= CheckStructure("Object", "id", "ID");
 	result &= CheckStructure("Object", "loc", "float");
@@ -947,15 +1165,74 @@ bool AIOBlenderImporter::CheckStructure(const std::string& _path)
 	result &= CheckStructure("Object", "parentinv", "float");
 	result &= CheckStructure("Object", "*data", "void");
 	result &= CheckStructure("Object", "type", "short");
+	result &= CheckStructure("Object", "*parent", "Object");
+
+	result &= CheckStructure("Lamp", "type", "short");
+	result &= CheckStructure("Lamp", "r", "float");
+	result &= CheckStructure("Lamp", "g", "float");
+	result &= CheckStructure("Lamp", "b", "float");
+	result &= CheckStructure("Lamp", "energy", "float");
+	result &= CheckStructure("Lamp", "spotsize", "float");
+	result &= CheckStructure("Lamp", "spotblend", "float");
+	result &= CheckStructure("Lamp", "dist", "float");
+	result &= CheckStructure("Lamp", "falloff_type", "short");
 
 	result &= CheckStructure("Mesh", "id", "ID");
 	result &= CheckStructure("Mesh", "totvert", "int");
 	result &= CheckStructure("Mesh", "*mvert", "MVert");
+	result &= CheckStructure("Mesh", "**mat", "Material");
+	result &= CheckStructure("Mesh", "totface", "int", 0, 263);
+	result &= CheckStructure("Mesh", "*mface", "MFace", 0, 263);
+	result &= CheckStructure("Mesh", "*mtface", "MTFace", 0, 263);
+	result &= CheckStructure("Mesh", "totpoly", "int", 264);
+	result &= CheckStructure("Mesh", "*mpoly", "MPoly", 264);
+	result &= CheckStructure("Mesh", "*mloop", "MLoop", 264);
+	result &= CheckStructure("Mesh", "*mloopuv", "MLoopUV", 264);
+
+	result &= CheckStructure("MPoly", "loopstart", "int", 264);
+	result &= CheckStructure("MPoly", "totloop", "int", 264);
+	result &= CheckStructure("MPoly", "flag", "char", 264);
+	result &= CheckStructure("MLoop", "v", "int", 264);
+	result &= CheckStructure("MLoopUV", "uv", "float", 264);
+
+	result &= CheckStructure("MFace", "v1", "int", 0, 263);
+	result &= CheckStructure("MFace", "v2", "int", 0, 263);
+	result &= CheckStructure("MFace", "v3", "int", 0, 263);
+	result &= CheckStructure("MFace", "v4", "int", 0, 263);
+	result &= CheckStructure("MFace", "flag", "char", 0, 263);
+	result &= CheckStructure("MTFace", "uv", "float", 0, 263);
+
+	
+
+	result &= CheckStructure("Material", "r", "float");
+	result &= CheckStructure("Material", "g", "float");
+	result &= CheckStructure("Material", "b", "float");
+	result &= CheckStructure("Material", "specr", "float");
+	result &= CheckStructure("Material", "specg", "float");
+	result &= CheckStructure("Material", "specb", "float");
+	result &= CheckStructure("Material", "ref", "float");
+	result &= CheckStructure("Material", "spec", "float");
+	result &= CheckStructure("Material", "emit", "float");
+	result &= CheckStructure("Material", "alpha", "float");
+	result &= CheckStructure("Material", "har", "short");
+	result &= CheckStructure("Material", "mode", "int");
+	result &= CheckStructure("Material", "*mtex", "MTex");
+
+	result &= CheckStructure("MTex", "*tex", "Tex");
+	result &= CheckStructure("MTex", "mapto", "short");
+	result &= CheckStructure("Tex", "*ima", "Image");
+	result &= CheckStructure("Image", "name", "char");
+	result &= CheckStructure("Image", "colorspace_settings", "ColorManagedColorspaceSettings", 264);
+	result &= CheckStructure("ColorManagedColorspaceSettings", "name", "char", 264);
 
 	result &= CheckStructure("MVert", "co", "float");
 	result &= CheckStructure("MVert", "no", "short");
 
 	result &= CheckStructure("ID", "name", "char");
+	result &= CheckStructure("Link", "*next", "Link");
+
+	if (result)
+		std::cout << "        ....    ok!" << std::endl;
 
 	return result;
 }
@@ -966,7 +1243,7 @@ bool AIOBlenderImporter::CheckStructure(const std::string& _strcName, const std:
 		auto sdnaId = nameToSDNAIdx[_strcName];
 		if (sdna.find(sdnaId) == sdna.end())
 		{
-			std::cout << "Unable to find structure " << _strcName << std::endl;
+			std::cout << std::endl << "Unable to find structure " << _strcName << std::endl;
 			return false;
 		}
 
@@ -974,7 +1251,7 @@ bool AIOBlenderImporter::CheckStructure(const std::string& _strcName, const std:
 
 		if (strc->Fields().find(_fieldName) == strc->Fields().end())
 		{
-			std::cout << "Unable to find field " << _strcName << "." << _fieldName << std::endl;
+			std::cout << std::endl << "Unable to find field " << _strcName << "." << _fieldName << std::endl;
 			return false;
 		}
 
@@ -982,7 +1259,7 @@ bool AIOBlenderImporter::CheckStructure(const std::string& _strcName, const std:
 
 		if (sdnaTypes[field->TypeIdx()] != _fieldType)
 		{
-			std::cout << "Field " << _strcName << "." << _fieldName << " is " << sdnaTypes[field->TypeIdx()] << " but should be " << _fieldType << std::endl;
+			std::cout << std::endl << "Field " << _strcName << "." << _fieldName << " is " << sdnaTypes[field->TypeIdx()] << " but should be " << _fieldType << std::endl;
 			return false;
 		}
 	}

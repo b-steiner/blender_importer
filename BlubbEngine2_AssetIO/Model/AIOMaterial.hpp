@@ -63,3 +63,12 @@ namespace AssetIO
 		std::unordered_map<AIOMappingTarget, AIOTexture*> textures;
 	};
 }
+
+inline AssetIO::AIOMaterialMode operator| (AssetIO::AIOMaterialMode _a, AssetIO::AIOMaterialMode _b)
+{
+	return (AssetIO::AIOMaterialMode)((int)_a | (int)_b);
+}
+inline AssetIO::AIOMaterialMode operator& (AssetIO::AIOMaterialMode _a, AssetIO::AIOMaterialMode _b)
+{
+	return (AssetIO::AIOMaterialMode)((int)_a & (int)_b);
+}

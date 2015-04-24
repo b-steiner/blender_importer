@@ -2,10 +2,16 @@
 
 using namespace AssetIO;
 
-AIONode::AIONode(const std::string& _name) : name(_name)
+AIONode::AIONode(const std::string& _name) : name(_name), lightsource(nullptr), material(nullptr), mesh(nullptr), animation(nullptr)
 { }
 AIONode::~AIONode()
-{ }
+{
+	if (lightsource != nullptr)
+		delete lightsource;
+
+	for (auto node : nodes)
+		delete node;
+}
 
 const std::string& AIONode::Name() const
 {

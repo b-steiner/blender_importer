@@ -7,8 +7,6 @@ ambientIntensity(1.0f), emittingIntensity(0.0f), hardness(50), opacity(1.0f), mo
 { }
 AIOMaterial::~AIOMaterial()
 {
-	for (auto it : textures)
-		delete it.second;
 }
 
 inline const std::string& AIOMaterial::Name() const

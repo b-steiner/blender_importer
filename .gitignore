@@ -2,4 +2,6 @@
 *.suo
 bin
 build
-/BlubbEngine2_AssetIO/TestData/output.xml
+/TestData/output.xml
+/TestData/output2.xml
+*.opensdf

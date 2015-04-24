@@ -7,7 +7,7 @@ namespace AssetIO
 {
 	enum class AIOMappingTarget
 	{
-		Diffuse, Specular, Other
+		Diffuse, Normals, Other
 	};
 
 	enum class AIOColorSpace

@@ -80,6 +80,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="AssetIO.hpp" />
     <ClInclude Include="Importer\AIOBlenderImporter.hpp" />
     <ClInclude Include="dllconfig.hpp" />
     <ClInclude Include="Importer\BlenderImporter\SDNAStructure.hpp" />
