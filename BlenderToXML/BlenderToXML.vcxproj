@@ -61,17 +61,17 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>$(SolutionDir)bin\$(Configuration)\BlubbEngine2_AssetIO\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>BlubbEngine2_AssetIO.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)bin\$(Configuration)\AssetIO\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>AssetIO.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
-      <Command>copy "$(SolutionDir)bin\$(Configuration)\BlubbEngine2_AssetIO\BlubbEngine2_AssetIO.dll" "$(OutDir)"</Command>
+      <Command>copy "$(SolutionDir)bin\$(Configuration)\AssetIO\AssetIO.dll" "$(OutDir)"</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Outputs>BlubbEngine2_AssetIO.dll</Outputs>
+      <Outputs>AssetIO.dll</Outputs>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Inputs>$(SolutionDir)bin\$(Configuration)\BlubbEngine2_AssetIO\BlubbEngine2_AssetIO.dll</Inputs>
+      <Inputs>$(SolutionDir)bin\$(Configuration)\AssetIO\AssetIO.dll</Inputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">
@@ -90,17 +90,17 @@
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
-      <AdditionalLibraryDirectories>$(SolutionDir)bin\$(Configuration)\BlubbEngine2_AssetIO\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>BlubbEngine2_AssetIO.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(SolutionDir)bin\$(Configuration)\AssetIO\;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>AssetIO.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <CustomBuildStep>
-      <Command>copy "$(SolutionDir)bin\$(Configuration)\BlubbEngine2_AssetIO\BlubbEngine2_AssetIO.dll" "$(OutDir)"</Command>
+      <Command>copy "$(SolutionDir)bin\$(Configuration)\AssetIO\AssetIO.dll" "$(OutDir)"</Command>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Outputs>BlubbEngine2_AssetIO.dll</Outputs>
+      <Outputs>AssetIO.dll</Outputs>
     </CustomBuildStep>
     <CustomBuildStep>
-      <Inputs>$(SolutionDir)bin\$(Configuration)\BlubbEngine2_AssetIO\BlubbEngine2_AssetIO.dll</Inputs>
+      <Inputs>$(SolutionDir)bin\$(Configuration)\AssetIO\AssetIO.dll</Inputs>
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
