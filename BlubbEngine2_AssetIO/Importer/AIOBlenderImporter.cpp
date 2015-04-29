@@ -1100,9 +1100,9 @@ void AIOBlenderImporter::CalculateTangents(AIOMesh* _mesh)
 
 		for (int i = 0; i < _mesh->Indices().size(); i+=3)
 		{
-			unsigned int i1 = i;
-			unsigned int i2 = i + 1;
-			unsigned int i3 = i + 2;
+			unsigned int i1 = _mesh->Indices()[i];
+			unsigned int i2 = _mesh->Indices()[i+1];
+			unsigned int i3 = _mesh->Indices()[i+2];
 
 			AIOVector2 uv1 = uvs[i1];
 			AIOVector2 uv2 = uvs[i2];
