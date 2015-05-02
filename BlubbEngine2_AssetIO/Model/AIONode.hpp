@@ -22,13 +22,13 @@ namespace AssetIO
 		const std::string& Name() const;
 		std::vector<AIONode*>& Nodes();
 
-		const AIOMesh* Mesh() const;
+		AIOMesh* Mesh() const;
 		void Mesh(AIOMesh* _value);
-		const AIOMaterial* Material() const;
+		AIOMaterial* Material() const;
 		void Material(AIOMaterial* _value);
-		const AIOAnimation* Animation() const;
+		AIOAnimation* Animation() const;
 		void Animation(AIOAnimation* _value);
-		const AIOLightSource* LightSource() const;
+		AIOLightSource* LightSource() const;
 		void LightSource(AIOLightSource* _value);
 
 		const AIOMatrix4& Matrix() const;

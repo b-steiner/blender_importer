@@ -22,7 +22,7 @@ std::vector<AIONode*>& AIONode::Nodes()
 	return nodes;
 }
 
-const AIOMesh* AIONode::Mesh() const
+AIOMesh* AIONode::Mesh() const
 {
 	return mesh;
 }
@@ -30,7 +30,7 @@ void AIONode::Mesh(AIOMesh* _value)
 {
 	mesh = _value;
 }
-const AIOMaterial* AIONode::Material() const
+AIOMaterial* AIONode::Material() const
 {
 	return material;
 }
@@ -38,7 +38,7 @@ void AIONode::Material(AIOMaterial* _value)
 {
 	material = _value;
 }
-const AIOAnimation* AIONode::Animation() const
+AIOAnimation* AIONode::Animation() const
 {
 	return animation;
 }
@@ -46,7 +46,7 @@ void AIONode::Animation(AIOAnimation* _value)
 {
 	animation = _value;
 }
-const AIOLightSource* AIONode::LightSource() const
+AIOLightSource* AIONode::LightSource() const
 {
 	return lightsource;
 }
