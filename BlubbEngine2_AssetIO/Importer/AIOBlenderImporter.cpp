@@ -668,7 +668,11 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 		indices.reserve(faceCount * 4);
 		faceNormals = new AIOVector3[faceCount];
 		if (hasUvs)
-			faceUvs.push_back(std::vector<AIOVector2>(faceCount * 4));
+		{
+			std::vector<AIOVector2> inituv;
+			inituv.reserve(faceCount * 4);
+			faceUvs.push_back(inituv);
+		}
 		faceFlags = new char[faceCount];
 		faceStart = new unsigned int[faceCount];
 		faceLength = new unsigned int[faceCount];
@@ -751,7 +755,11 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 		faceStart = new unsigned int[faceCount];
 		faceLength = new unsigned int[faceCount];
 		if (hasUvs)
-			faceUvs.push_back(std::vector<AIOVector2>(faceCount * 4));
+		{
+			std::vector<AIOVector2> inituv;
+			faceUvs.push_back(inituv);
+			faceUvs.back().reserve(faceCount * 4);
+		}
 
 		SDNAStructure* mpolyStrc = sdna[nameToSDNAIdx["MPoly"]];
 		SDNAStructure* mloopStrc = sdna[nameToSDNAIdx["MLoop"]];

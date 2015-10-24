@@ -12,12 +12,12 @@ bool hasEnding(std::string const &fullString, std::string const &ending);
 
 void main(int argc, char* argv[])
 {
-	//AIOBlenderImporter importer;
+	AIOBlenderImporter importer;
 	//importer.ToXML(argv[1], argv[2]);
 	//importer.CheckStructure(argv[1]);
-	//importer.Load(argv[1]);
+	auto asset = importer.Load(argv[1]);
 
-	vector<string> pathes = get_all_files_names_within_folder("..\\TestData\\");
+	/*vector<string> pathes = get_all_files_names_within_folder("..\\TestData\\");
 
 	for (auto file : pathes)
 	{
@@ -39,7 +39,7 @@ void main(int argc, char* argv[])
 		}
 	}
 
-	system("PAUSE");
+	system("PAUSE");*/
 }
 
 wchar_t *convertCharArrayToLPCWSTR(const char* charArray)
