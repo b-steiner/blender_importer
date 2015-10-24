@@ -530,6 +530,7 @@ AIONode* AIOBlenderImporter::ParseNode(char* _ptr)
 		);
 
 	size = AIOVector3(size.X() * parentScale.X(), size.Y() * parentScale.Y(), size.Z() * parentScale.Z());
+	node->Scale(size);
 
 	AIOMatrix3 scaleMatrix = AIOMatrix3::Scale(parentScale);
 	AIOMatrix3 rsMatrix = parentInv.GetMat3();
