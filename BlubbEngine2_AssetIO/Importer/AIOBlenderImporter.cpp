@@ -539,9 +539,9 @@ AIONode* AIOBlenderImporter::ParseNode(char* _ptr)
 	rsMatrix.Transpose();
 
 	AIOVector3 ptranslation(parentInv.M14(), parentInv.M24(), parentInv.M34());
-	node->Translation(rsMatrix * node->Translation() + ptranslation);
+	node->Translation(rsMatrix * loc + ptranslation);
 
-	AIOMatrix3 crmat = AIOMatrix3::RotateZ(node->Rotation().Z()) * AIOMatrix3::RotateY(node->Rotation().Y()) * AIOMatrix3::RotateX(node->Rotation().X());
+	AIOMatrix3 crmat = AIOMatrix3::RotateZ(rot.Z()) * AIOMatrix3::RotateY(rot.Y()) * AIOMatrix3::RotateX(rot.X());
 	crmat = rMatrix * crmat;
 
 	float theta = 0.0f;
