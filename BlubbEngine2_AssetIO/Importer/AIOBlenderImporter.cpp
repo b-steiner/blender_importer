@@ -791,7 +791,7 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 				if (hasUvs)
 				{
 					float* uv = (float*)(mloopuvFaceStart + mloopuvStrc->Fields()["uv"]->Offset());
-					faceUvs[0].push_back(AIOVector2(uv[0], uv[1]));
+					faceUvs[0].push_back(AIOVector2(uv[0], 1.0f - uv[1])); //Blender has the texture origin on top left, OpenGL uses bottom left
 				}
 
 				mloopFaceStart += mloopSize;
