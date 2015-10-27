@@ -844,7 +844,7 @@ AIOMesh* AIOBlenderImporter::ParseMesh(uint64_t _ptr)
 			AIOVector2 uv;
 
 			if (hasUvs)
-				uv = faceUvs[0][indices[findex]];
+				uv = faceUvs[0][findex];
 
 			std::string key = KeyFromVertex(p, n, uv);
 			auto vit = vertexDictionary.find(key);
