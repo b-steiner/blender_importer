@@ -1071,7 +1071,7 @@ AIOLightSource* AIOBlenderImporter::ParseLightSource(uint64_t _ptr)
 		R<float>(lampPtr + lampStrc->Fields()["b"]->Offset())));
 	light->Intensity(R<float>(lampPtr + lampStrc->Fields()["energy"]->Offset()));
 	light->AngularAttenuation(R<float>(lampPtr + lampStrc->Fields()["spotblend"]->Offset()));
-	light->Angle(R<float>(lampPtr + lampStrc->Fields()["spotsize"]->Offset()) / 180.0f * (float)M_PI / 2.0f);
+	light->Angle(R<float>(lampPtr + lampStrc->Fields()["spotsize"]->Offset()));
 
 	float dist = R<float>(lampPtr + lampStrc->Fields()["dist"]->Offset());
 	uint16_t falloffType = R<uint16_t>(lampPtr + lampStrc->Fields()["falloff_type"]->Offset());
