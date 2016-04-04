@@ -1089,6 +1089,12 @@ AIOLightSource* AIOBlenderImporter::ParseLightSource(uint64_t _ptr)
 		break;
 	}
 
+	light->Distance(dist);
+
+	auto mode = R<uint32_t>(lampPtr + lampStrc->Fields()["mode"]->Offset());
+
+	light->HasClippingSphere((mode & 0x40) == 1);
+
 	return light;
 }
 

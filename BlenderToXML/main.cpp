@@ -13,9 +13,9 @@ bool hasEnding(std::string const &fullString, std::string const &ending);
 void main(int argc, char* argv[])
 {
 	AIOBlenderImporter importer;
-	//importer.ToXML(argv[1], argv[2]);
+	importer.ToXML(argv[1], argv[2]);
 	//importer.CheckStructure(argv[1]);
-	auto asset = importer.Load(argv[1]);
+	//auto asset = importer.Load(argv[1]);
 
 	/*vector<string> pathes = get_all_files_names_within_folder("..\\TestData\\");
 

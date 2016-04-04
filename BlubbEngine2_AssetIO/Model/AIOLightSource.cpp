@@ -3,7 +3,7 @@
 using namespace AssetIO;
 
 AIOLightSource::AIOLightSource() : intensity(0), angle(0), angularAttenuation(0), color(0, 0, 0), attenuation(0, 0, 0),
-type(AIOLightSourceType::DirectionalLight)
+type(AIOLightSourceType::DirectionalLight), distance(0), hasClippingSphere(false)
 { }
 AIOLightSource::~AIOLightSource()
 { }
@@ -57,4 +57,21 @@ inline AIOLightSourceType AIOLightSource::Type() const
 inline void AIOLightSource::Type(AIOLightSourceType _value)
 {
 	type = _value;
+}
+
+inline float AIOLightSource::Distance() const
+{
+	return distance;
+}
+inline void AIOLightSource::Distance(float _value)
+{
+	distance = _value;
+}
+bool AIOLightSource::HasClippingSphere()
+{
+	return hasClippingSphere;
+}
+void AIOLightSource::HasClippingSphere(bool _value)
+{
+	hasClippingSphere = _value;
 }

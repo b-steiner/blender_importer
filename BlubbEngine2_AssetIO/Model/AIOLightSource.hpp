@@ -29,6 +29,10 @@ namespace AssetIO
 		inline void Color(const AIOVector3& _value);
 		inline const AIOVector3& Attenuation() const;
 		inline void Attenuation(const AIOVector3& _value);
+		inline float Distance() const;
+		inline void Distance(float _value);
+		bool HasClippingSphere();
+		void HasClippingSphere(bool _value);
 
 		inline AIOLightSourceType Type() const;
 		inline void Type(AIOLightSourceType _value);
@@ -37,6 +41,9 @@ namespace AssetIO
 		float intensity;
 		float angle;
 		float angularAttenuation;
+		float distance;
+		
+		bool hasClippingSphere;
 
 		AIOVector3 color;
 		AIOVector3 attenuation;
