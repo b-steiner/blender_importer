@@ -4,6 +4,9 @@
 #include <fstream>
 #include <iostream>
 
+//This has to contain the correct gamma value for the system. For windows this is 1/2.2 = 0.45454545
+#define ONE_OVER_GAMMA 0.4545454545
+
 #define _USE_MATH_DEFINES
 #include <math.h>
 
@@ -951,13 +954,13 @@ AIOMaterial* AIOBlenderImporter::ParseMaterial(uint64_t _ptr)
 	asset->materials[name] = material;
 
 	material->DiffuseColor(AIOVector3(
-		R<float>(matPtr + matStrc->Fields()["r"]->Offset()),
-		R<float>(matPtr + matStrc->Fields()["g"]->Offset()),
-		R<float>(matPtr + matStrc->Fields()["b"]->Offset())));
+		pow(R<float>(matPtr + matStrc->Fields()["r"]->Offset()), ONE_OVER_GAMMA),
+		pow(R<float>(matPtr + matStrc->Fields()["g"]->Offset()), ONE_OVER_GAMMA),
+		pow(R<float>(matPtr + matStrc->Fields()["b"]->Offset()), ONE_OVER_GAMMA)));
 	material->SpecularColor(AIOVector3(
-		R<float>(matPtr + matStrc->Fields()["specr"]->Offset()),
-		R<float>(matPtr + matStrc->Fields()["specg"]->Offset()),
-		R<float>(matPtr + matStrc->Fields()["specb"]->Offset())));
+		pow(R<float>(matPtr + matStrc->Fields()["specr"]->Offset()), ONE_OVER_GAMMA),
+		pow(R<float>(matPtr + matStrc->Fields()["specg"]->Offset()), ONE_OVER_GAMMA),
+		pow(R<float>(matPtr + matStrc->Fields()["specb"]->Offset()), ONE_OVER_GAMMA)));
 	material->DiffuseIntensity(R<float>(matPtr + matStrc->Fields()["ref"]->Offset()));
 	material->SpecularIntensity(R<float>(matPtr + matStrc->Fields()["spec"]->Offset()));
 	material->EmittingIntensity(R<float>(matPtr + matStrc->Fields()["emit"]->Offset()));
@@ -1066,9 +1069,9 @@ AIOLightSource* AIOBlenderImporter::ParseLightSource(uint64_t _ptr)
 	}
 
 	light->Color(AIOVector3(
-		R<float>(lampPtr + lampStrc->Fields()["r"]->Offset()),
-		R<float>(lampPtr + lampStrc->Fields()["g"]->Offset()),
-		R<float>(lampPtr + lampStrc->Fields()["b"]->Offset())));
+		pow(R<float>(lampPtr + lampStrc->Fields()["r"]->Offset()), ONE_OVER_GAMMA),
+		pow(R<float>(lampPtr + lampStrc->Fields()["g"]->Offset()), ONE_OVER_GAMMA),
+		pow(R<float>(lampPtr + lampStrc->Fields()["b"]->Offset()), ONE_OVER_GAMMA)));
 	light->Intensity(R<float>(lampPtr + lampStrc->Fields()["energy"]->Offset()));
 	light->AngularAttenuation(R<float>(lampPtr + lampStrc->Fields()["spotblend"]->Offset()));
 	light->Angle(R<float>(lampPtr + lampStrc->Fields()["spotsize"]->Offset()));
