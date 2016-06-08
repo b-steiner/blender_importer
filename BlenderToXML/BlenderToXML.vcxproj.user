@@ -4,7 +4,7 @@
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>C:\twenty_pitcher_engine\content\rendering\mesh\cubes\transformation_test.blend .\output.xml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>C:\repos\twenty_pitcher_engine\content\editor_test_project\models\cubes.blend .\output.xml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

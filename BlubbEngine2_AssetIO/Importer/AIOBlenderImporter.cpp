@@ -5,7 +5,7 @@
 #include <iostream>
 
 //This has to contain the correct gamma value for the system. For windows this is 1/2.2 = 0.45454545
-#define ONE_OVER_GAMMA 0.4545454545
+#define ONE_OVER_GAMMA 0.4545454545f
 
 #define _USE_MATH_DEFINES
 #include <math.h>
@@ -954,13 +954,13 @@ AIOMaterial* AIOBlenderImporter::ParseMaterial(uint64_t _ptr)
 	asset->materials[name] = material;
 
 	material->DiffuseColor(AIOVector3(
-		pow(R<float>(matPtr + matStrc->Fields()["r"]->Offset()), ONE_OVER_GAMMA),
-		pow(R<float>(matPtr + matStrc->Fields()["g"]->Offset()), ONE_OVER_GAMMA),
-		pow(R<float>(matPtr + matStrc->Fields()["b"]->Offset()), ONE_OVER_GAMMA)));
+		powf(R<float>(matPtr + matStrc->Fields()["r"]->Offset()), ONE_OVER_GAMMA),
+		powf(R<float>(matPtr + matStrc->Fields()["g"]->Offset()), ONE_OVER_GAMMA),
+		powf(R<float>(matPtr + matStrc->Fields()["b"]->Offset()), ONE_OVER_GAMMA)));
 	material->SpecularColor(AIOVector3(
-		pow(R<float>(matPtr + matStrc->Fields()["specr"]->Offset()), ONE_OVER_GAMMA),
-		pow(R<float>(matPtr + matStrc->Fields()["specg"]->Offset()), ONE_OVER_GAMMA),
-		pow(R<float>(matPtr + matStrc->Fields()["specb"]->Offset()), ONE_OVER_GAMMA)));
+		powf(R<float>(matPtr + matStrc->Fields()["specr"]->Offset()), ONE_OVER_GAMMA),
+		powf(R<float>(matPtr + matStrc->Fields()["specg"]->Offset()), ONE_OVER_GAMMA),
+		powf(R<float>(matPtr + matStrc->Fields()["specb"]->Offset()), ONE_OVER_GAMMA)));
 	material->DiffuseIntensity(R<float>(matPtr + matStrc->Fields()["ref"]->Offset()));
 	material->SpecularIntensity(R<float>(matPtr + matStrc->Fields()["spec"]->Offset()));
 	material->EmittingIntensity(R<float>(matPtr + matStrc->Fields()["emit"]->Offset()));
@@ -1050,8 +1050,12 @@ AIOMaterial* AIOBlenderImporter::ParseMaterial(uint64_t _ptr)
 AIOLightSource* AIOBlenderImporter::ParseLightSource(uint64_t _ptr)
 {
 	SDNAStructure* lampStrc = sdna[nameToSDNAIdx["Lamp"]];
+	SDNAStructure* idStrc = sdna[nameToSDNAIdx["ID"]];
+
 	char* lampPtr = addressToFileblock[_ptr] + 16 + ptrSize;
-	AIOLightSource* light = new AIOLightSource();
+	std::string name(lampPtr + lampStrc->Fields()["id"]->Offset() + idStrc->Fields()["name"]->Offset());
+
+	AIOLightSource* light = new AIOLightSource(name);
 
 	uint16_t type = R<uint16_t>(lampPtr + lampStrc->Fields()["type"]->Offset());
 

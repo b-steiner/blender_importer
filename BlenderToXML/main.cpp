@@ -7,7 +7,7 @@
 using namespace std;
 using namespace AssetIO;
 
-//#define TEST_MODE
+#define TEST_MODE
 
 vector<string> get_all_files_names_within_folder(const string& folder);
 bool hasEnding(std::string const &fullString, std::string const &ending);

@@ -15,7 +15,7 @@ namespace AssetIO
 	class _AIO_DECLSPEC AIOLightSource
 	{
 	public:
-		AIOLightSource();
+		AIOLightSource(const std::string& name);
 		~AIOLightSource();
 
 		inline float Intensity() const;
@@ -37,11 +37,14 @@ namespace AssetIO
 		inline AIOLightSourceType Type() const;
 		inline void Type(AIOLightSourceType _value);
 
+		inline const std::string& Name() const;
+
 	private:
 		float intensity;
 		float angle;
 		float angularAttenuation;
 		float distance;
+		std::string name;
 		
 		bool hasClippingSphere;
 
