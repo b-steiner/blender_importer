@@ -1,0 +1,225 @@
+﻿  blender_importer.cpp
+  sdna_struct.cpp
+  animation.cpp
+  asset.cpp
+  light_source.cpp
+  material.cpp
+  mesh.cpp
+  node.cpp
+  texture.cpp
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(22): warning C4251: 'bdl::blender_importer::animation::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation' (bdl.blender_importer\model\animation.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\texture.hpp(20): warning C4251: 'bdl::blender_importer::texture::m_path' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::texture' (bdl.blender_importer\model\material.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\light_source.hpp(21): warning C4251: 'bdl::blender_importer::light_source::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::light_source' (bdl.blender_importer\model\light_source.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\texture.hpp(20): warning C4251: 'bdl::blender_importer::texture::m_path' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::texture' (bdl.blender_importer\model\texture.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(15): warning C4251: 'bdl::blender_importer::mesh::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh' (bdl.blender_importer\model\mesh.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\material.hpp(18): warning C4251: 'bdl::blender_importer::material::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::material' (bdl.blender_importer\model\material.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(23): warning C4251: 'bdl::blender_importer::animation::m_points' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\animation.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(24): warning C4251: 'bdl::blender_importer::animation::m_prev_handles' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\animation.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(25): warning C4251: 'bdl::blender_importer::animation::m_next_handles' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\animation.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(15): warning C4251: 'bdl::blender_importer::mesh::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(15): warning C4251: 'bdl::blender_importer::mesh::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh' (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(26): warning C4251: 'bdl::blender_importer::animation::m_interpolation_mode' : class 'std::vector<bdl::blender_importer::interpolation_mode,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::interpolation_mode
+          ] (bdl.blender_importer\model\animation.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(16): warning C4251: 'bdl::blender_importer::mesh::m_positions' : class 'std::vector<bdl::blender_importer::bli_vector3,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector3
+          ] (bdl.blender_importer\model\mesh.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(17): warning C4251: 'bdl::blender_importer::mesh::m_normals' : class 'std::vector<bdl::blender_importer::bli_vector3,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector3
+          ] (bdl.blender_importer\model\mesh.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(16): warning C4251: 'bdl::blender_importer::mesh::m_positions' : class 'std::vector<bdl::blender_importer::bli_vector3,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector3
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(16): warning C4251: 'bdl::blender_importer::mesh::m_positions' : class 'std::vector<bdl::blender_importer::bli_vector3,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector3
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(27): warning C4251: 'bdl::blender_importer::animation::m_target' : class 'std::vector<bdl::blender_importer::interpolation_target,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::interpolation_target
+          ] (bdl.blender_importer\model\animation.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(17): warning C4251: 'bdl::blender_importer::mesh::m_normals' : class 'std::vector<bdl::blender_importer::bli_vector3,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector3
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(17): warning C4251: 'bdl::blender_importer::mesh::m_normals' : class 'std::vector<bdl::blender_importer::bli_vector3,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector3
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(18): warning C4251: 'bdl::blender_importer::mesh::m_tangents' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector4,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector4
+          ] (bdl.blender_importer\model\mesh.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(18): warning C4251: 'bdl::blender_importer::mesh::m_tangents' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector4,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector4
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(18): warning C4251: 'bdl::blender_importer::mesh::m_tangents' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector4,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector4
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(19): warning C4251: 'bdl::blender_importer::mesh::m_indices' : class 'std::vector<unsigned int,std::allocator<char32_t>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh' (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(19): warning C4251: 'bdl::blender_importer::mesh::m_indices' : class 'std::vector<unsigned int,std::allocator<char32_t>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(19): warning C4251: 'bdl::blender_importer::mesh::m_indices' : class 'std::vector<unsigned int,std::allocator<char32_t>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh' (bdl.blender_importer\model\mesh.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(20): warning C4251: 'bdl::blender_importer::mesh::m_texCoords' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(20): warning C4251: 'bdl::blender_importer::mesh::m_texCoords' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\material.hpp(30): warning C4251: 'bdl::blender_importer::material::m_textures' : class 'std::unordered_map<bdl::blender_importer::mapping_target,bdl::blender_importer::texture *,std::hash<_Kty>,std::equal_to<_Kty>,std::allocator<std::pair<const _Kty,_Ty>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::material'
+          with
+          [
+              _Kty=bdl::blender_importer::mapping_target
+  ,            _Ty=bdl::blender_importer::texture *
+          ] (bdl.blender_importer\model\material.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\mesh.hpp(20): warning C4251: 'bdl::blender_importer::mesh::m_texCoords' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::mesh'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\mesh.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\texture.hpp(20): warning C4251: 'bdl::blender_importer::texture::m_path' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::texture' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\texture.hpp(20): warning C4251: 'bdl::blender_importer::texture::m_path' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::texture' (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\material.hpp(18): warning C4251: 'bdl::blender_importer::material::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::material' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\material.hpp(18): warning C4251: 'bdl::blender_importer::material::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::material' (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\material.hpp(30): warning C4251: 'bdl::blender_importer::material::m_textures' : class 'std::unordered_map<bdl::blender_importer::mapping_target,bdl::blender_importer::texture *,std::hash<_Kty>,std::equal_to<_Kty>,std::allocator<std::pair<const _Kty,_Ty>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::material'
+          with
+          [
+              _Kty=bdl::blender_importer::mapping_target
+  ,            _Ty=bdl::blender_importer::texture *
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\material.hpp(30): warning C4251: 'bdl::blender_importer::material::m_textures' : class 'std::unordered_map<bdl::blender_importer::mapping_target,bdl::blender_importer::texture *,std::hash<_Kty>,std::equal_to<_Kty>,std::allocator<std::pair<const _Kty,_Ty>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::material'
+          with
+          [
+              _Kty=bdl::blender_importer::mapping_target
+  ,            _Ty=bdl::blender_importer::texture *
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\light_source.hpp(21): warning C4251: 'bdl::blender_importer::light_source::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::light_source' (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\light_source.hpp(21): warning C4251: 'bdl::blender_importer::light_source::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::light_source' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(22): warning C4251: 'bdl::blender_importer::animation::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation' (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(22): warning C4251: 'bdl::blender_importer::animation::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(23): warning C4251: 'bdl::blender_importer::animation::m_points' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(24): warning C4251: 'bdl::blender_importer::animation::m_prev_handles' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(23): warning C4251: 'bdl::blender_importer::animation::m_points' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(25): warning C4251: 'bdl::blender_importer::animation::m_next_handles' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(24): warning C4251: 'bdl::blender_importer::animation::m_prev_handles' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(25): warning C4251: 'bdl::blender_importer::animation::m_next_handles' : class 'std::vector<std::vector<bdl::blender_importer::bli_vector2,std::allocator<_Ty>>,std::allocator<std::vector<_Ty,std::allocator<_Ty>>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::bli_vector2
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(26): warning C4251: 'bdl::blender_importer::animation::m_interpolation_mode' : class 'std::vector<bdl::blender_importer::interpolation_mode,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::interpolation_mode
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(26): warning C4251: 'bdl::blender_importer::animation::m_interpolation_mode' : class 'std::vector<bdl::blender_importer::interpolation_mode,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::interpolation_mode
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(27): warning C4251: 'bdl::blender_importer::animation::m_target' : class 'std::vector<bdl::blender_importer::interpolation_target,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::interpolation_target
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\animation.hpp(27): warning C4251: 'bdl::blender_importer::animation::m_target' : class 'std::vector<bdl::blender_importer::interpolation_target,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::animation'
+          with
+          [
+              _Ty=bdl::blender_importer::interpolation_target
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\node.hpp(20): warning C4251: 'bdl::blender_importer::node::m_nodes' : class 'std::vector<bdl::blender_importer::node *,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::node'
+          with
+          [
+              _Ty=bdl::blender_importer::node *
+          ] (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\node.hpp(21): warning C4251: 'bdl::blender_importer::node::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::node' (bdl.blender_importer\model\node.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\node.hpp(20): warning C4251: 'bdl::blender_importer::node::m_nodes' : class 'std::vector<bdl::blender_importer::node *,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::node'
+          with
+          [
+              _Ty=bdl::blender_importer::node *
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\node.hpp(21): warning C4251: 'bdl::blender_importer::node::m_name' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::node' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\asset.hpp(14): warning C4251: 'bdl::blender_importer::asset::m_path' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::asset' (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\asset.hpp(15): warning C4251: 'bdl::blender_importer::asset::m_nodes' : class 'std::vector<bdl::blender_importer::node *,std::allocator<_Ty>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::asset'
+          with
+          [
+              _Ty=bdl::blender_importer::node *
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\asset.hpp(23): warning C4251: 'bdl::blender_importer::asset::m_meshes' : class 'std::unordered_map<std::string,bdl::blender_importer::mesh *,std::hash<_Kty>,std::equal_to<_Kty>,std::allocator<std::pair<const _Kty,_Ty>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::asset'
+          with
+          [
+              _Kty=std::string
+  ,            _Ty=bdl::blender_importer::mesh *
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\asset.hpp(24): warning C4251: 'bdl::blender_importer::asset::m_materials' : class 'std::unordered_map<std::string,bdl::blender_importer::material *,std::hash<_Kty>,std::equal_to<_Kty>,std::allocator<std::pair<const _Kty,_Ty>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::asset'
+          with
+          [
+              _Kty=std::string
+  ,            _Ty=bdl::blender_importer::material *
+          ] (bdl.blender_importer\model\asset.cpp)
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\model\asset.hpp(25): warning C4251: 'bdl::blender_importer::asset::m_textures' : class 'std::unordered_map<std::string,bdl::blender_importer::texture *,std::hash<_Kty>,std::equal_to<_Kty>,std::allocator<std::pair<const _Kty,_Ty>>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::asset'
+          with
+          [
+              _Kty=std::string
+  ,            _Ty=bdl::blender_importer::texture *
+          ] (bdl.blender_importer\model\asset.cpp)
+  bli_exception.cpp
+  bli_matrix4.cpp
+  bli_vector2.cpp
+  bli_vector3.cpp
+  bli_vector4.cpp
+c:\repos\twenty_pitcher_engine\external\blender_importer\blender_importer\bdl.blender_importer\util\bli_exception.hpp(9): warning C4251: 'bdl::blender_importer::bli_exception::m_message' : class 'std::basic_string<char,std::char_traits<char>,std::allocator<char>>' needs to have dll-interface to be used by clients of class 'bdl::blender_importer::bli_exception' (bdl.blender_importer\util\bli_exception.cpp)
+     Creating library C:\repos\twenty_pitcher_engine\external\blender_importer\bin\blender_importer.x64.Debug\blender_importerD.lib and object C:\repos\twenty_pitcher_engine\external\blender_importer\bin\blender_importer.x64.Debug\blender_importerD.exp
+  blender_importer.vcxproj -> C:\repos\twenty_pitcher_engine\external\blender_importer\bin\blender_importer.x64.Debug\blender_importerD.dll
