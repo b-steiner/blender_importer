@@ -1,11 +1,8 @@
 *.sdf
 *.suo
-build
+temp
 /TestData/output.xml
 /TestData/output2.xml
 *.opensdf
-/bin/Debug/BlenderToXML
-/bin/Release/BlenderToXML
-/bin/Debug/AssetIO/AssetIOd.exp
-/bin/Debug/AssetIO/AssetIOd.ilk
-/bin/Release/AssetIO/AssetIO.exp
+bin
+ipch
