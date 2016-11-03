@@ -17,7 +17,7 @@ BEGIN_BDL_BLI
 		PROPERTY1(std::vector<bli_vector3>, normals, GET_REF);
 		PROPERTY1(std::vector<std::vector<bli_vector4>>, tangents, GET_REF);
 		PROPERTY1(std::vector<unsigned int>, indices, GET_REF);
-		PROPERTY1(std::vector<std::vector<bli_vector2>>, texCoords, GET_REF);
+		PROPERTY1(std::vector<std::vector<bli_vector2>>, tex_coords, GET_REF);
 
 	public:
 		mesh(const std::string& name);

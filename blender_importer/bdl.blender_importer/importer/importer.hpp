@@ -47,13 +47,9 @@ BEGIN_BDL_BLI
 		{
 			return bli_vector3(R<float>(ptr), R<float>(ptr + 4), R<float>(ptr + 8));
 		}
-		template <> bli_matrix4 R<bli_matrix4>(char* ptr)
-		{
-			return bli_matrix4((float*)ptr);
-		}
 		uint64_t RPtr(char* ptr)
 		{
-			if (ptrSize == 4)
+			if (m_ptr_size == 4)
 				return (uint64_t)(*((uint32_t*)ptr));
 			else
 				return *((uint64_t*)ptr);

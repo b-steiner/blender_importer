@@ -12,6 +12,7 @@ class BLI_EXPORT bli_vector3
 
 public:
 	bli_vector3();
+	bli_vector3(float* values);
 	bli_vector3(float x, float y, float z);
 	bli_vector3(const bli_vector3& vector);
 

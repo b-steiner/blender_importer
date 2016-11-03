@@ -10,6 +10,7 @@ class BLI_EXPORT bli_vector2
 	PROPERTY2(float, y, GET, SET);
 
 public:
+	bli_vector2();
 	bli_vector2(float x, float y);
 	bli_vector2(const bli_vector2& vector);
 

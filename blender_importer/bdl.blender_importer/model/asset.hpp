@@ -5,11 +5,11 @@
 
 BEGIN_BDL_BLI
 
-	//class AIOBlenderImporter;
+	class importer;
 
 	class BLI_EXPORT asset
 	{
-		//friend AIOBlenderImporter;
+		friend importer;
 
 		PROPERTY1(std::string, path, GET_CONST_REF);
 		PROPERTY1(std::vector<node*>, nodes, GET_REF);

@@ -57,6 +57,9 @@
     <ClCompile Include="bdl.blender_importer\importer\sdna_struct.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bdl.blender_importer\importer\importer.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <None Include="util\properties.hpp" />
@@ -105,6 +108,9 @@
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="bdl.blender_importer\importer\sdna_struct.hpp">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="bdl.blender_importer\importer\importer.hpp">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

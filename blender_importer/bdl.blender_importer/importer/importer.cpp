@@ -2,12 +2,31 @@
 #include "importer.hpp"
 
 #include "../util/bli_exception.hpp"
+#include <glm/glm.hpp>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/type_ptr.hpp>
 
 //This has to contain the correct gamma value for the system. For windows this is 1/2.2 = 0.45454545
 #define ONE_OVER_GAMMA 0.4545454545f
 
-
 using namespace bdl::blender_importer;
+
+
+#pragma region Helper Methods
+
+glm::vec2 to_glm(const bli_vector2& v)
+{
+	return glm::vec2(v.x(), v.y());
+}
+
+glm::vec3 to_glm(const bli_vector3& v)
+{
+	return glm::vec3(v.x(), v.y(), v.z());
+}
+
+#pragma endregion
+
+
 
 importer::importer() : m_data(nullptr)
 { }
@@ -70,9 +89,9 @@ void importer::to_xml(const std::string& input_path, const std::string& output_p
 
 	out.close();
 }
-void importer::fileblock_to_xml(char* ptr, std::ofstream& out)
+void importer::fileblock_to_xml(char* pptr, std::ofstream& out)
 {
-	char* ptr = ptr;
+	char* ptr = pptr;
 	char identifier[5];
 	identifier[4] = '\0';
 
@@ -168,7 +187,7 @@ uint64_t importer::sdna_field_to_xml(char* ptr, sdna_field* field, std::ofstream
 	}
 	else
 	{
-		size += Value2XML(ptr + field->offset(), field->type_idx(), m_sdna_type_sizes[field->type_idx()], m_sdna_is_pointer[field->name_idx()], out, intent);
+		size += value_to_xml(ptr + field->offset(), field->type_idx(), m_sdna_type_sizes[field->type_idx()], m_sdna_is_pointer[field->name_idx()], out, intent);
 	}
 
 	out << "</" << name << ">" << std::endl;
@@ -298,9 +317,9 @@ void importer::load_file(const std::string& path)
 		}
 	}
 }
-void importer::parse_sdna_block(char* ptr)
+void importer::parse_sdna_block(char* pptr)
 {
-	char* ptr = ptr + 16 + m_ptr_size;
+	char* ptr = pptr + 16 + m_ptr_size;
 
 	char code[5];
 	code[4] = '\0';
@@ -486,7 +505,7 @@ asset* importer::parse_asset(const std::string& _path)
 			m_asset->nodes().push_back(parse_node(m_object_blocks[i]));
 	}
 
-	return asset;
+	return m_asset;
 }
 node* importer::parse_node(char* ptr)
 {
@@ -502,62 +521,66 @@ node* importer::parse_node(char* ptr)
 	std::string name = std::string(idPtr + idStrc->fields()["name"]->offset() + 2);
 	node* result_node = new node(name);
 
-	bli_vector3 loc = R<bli_vector3>(m_data + strc->fields()["loc"]->offset());
-	bli_vector3 rot = R<bli_vector3>(m_data + strc->fields()["rot"]->offset());
-	bli_vector3 size = R<bli_vector3>(m_data + strc->fields()["size"]->offset());
+	glm::vec3 loc = glm::make_vec3((float*)(m_data + strc->fields()["loc"]->offset()));
+	glm::vec3 rot = glm::make_vec3((float*)(m_data + strc->fields()["rot"]->offset()));
+	glm::vec3 size = glm::make_vec3((float*)(m_data + strc->fields()["size"]->offset()));
 
 	//Correct parent-child hirarchical transformations
 	//Blender stores transformations relative to the parent, but with an additional "offset" stored in the parentinv matrix.
 	//So we have to get the parameters of this matrix and correct our transformations.
-	bli_matrix4 parentInv = R<bli_matrix4>(m_data + strc->fields()["parentinv"]->offset());
-	bli_vector3 parentScale(
-		sqrtf(parentInv.M11() *parentInv.M11() + parentInv.M12() * parentInv.M12() + parentInv.M13() * parentInv.M13()),
-		sqrtf(parentInv.M21() *parentInv.M21() + parentInv.M22() * parentInv.M22() + parentInv.M23() * parentInv.M23()),
-		sqrtf(parentInv.M31() *parentInv.M31() + parentInv.M32() * parentInv.M32() + parentInv.M33() * parentInv.M33())
+	//bli_matrix4 parentInv = R<bli_matrix4>(m_data + strc->fields()["parentinv"]->offset());
+	glm::mat4 parentInv = glm::make_mat4((float*)(m_data + strc->fields()["parentinv"]->offset()));
+	glm::vec3 parentScale(
+		parentInv[1].length(),
+		parentInv[1].length(),
+		parentInv[1].length()
 		);
 
-	size = bli_vector3(size.X() * parentScale.X(), size.Y() * parentScale.Y(), size.Z() * parentScale.Z());
-	node->Scale(size);
+	result_node->scale(bli_vector3(size.x * parentScale.x, size.y * parentScale.y, size.z * parentScale.z));
 
-	AIOMatrix3 scaleMatrix = AIOMatrix3::Scale(parentScale);
-	AIOMatrix3 rsMatrix = parentInv.GetMat3();
-	AIOMatrix3 rMatrix = rsMatrix * scaleMatrix;
-	rMatrix.Transpose();
-	rsMatrix.Transpose();
+	glm::mat4 scaleMatrix = glm::scale(glm::mat4(1.0f), parentScale);
+	glm::mat4 rsMatrix = parentInv;
+	glm::mat4 rMatrix = rsMatrix * scaleMatrix;
+	rMatrix = glm::transpose(rMatrix);
+	rsMatrix = glm::transpose(rsMatrix);
 
-	bli_vector3 ptranslation(parentInv.M14(), parentInv.M24(), parentInv.M34());
-	node->Translation(rsMatrix * loc + ptranslation);
+	glm::vec3 ptranslation(parentInv[0][3], parentInv[1][3], parentInv[2][3]);
+	glm::vec3 t = glm::vec3(rsMatrix * glm::vec4(loc, 0)) + ptranslation;
+	result_node->translation(bli_vector3(t.x, t.y, t.z));
 
-	AIOMatrix3 crmat = AIOMatrix3::RotateZ(rot.Z()) * AIOMatrix3::RotateY(rot.Y()) * AIOMatrix3::RotateX(rot.X());
+	glm::mat4 crmat = glm::rotate(glm::mat4(1.0f), rot.z, glm::vec3(0, 0, 1)) *
+		glm::rotate(glm::mat4(1.0f), rot.y, glm::vec3(0, 1, 0)) *
+		glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(1, 0, 0));
+		//* AIOMatrix3::RotateY(rot.y) * AIOMatrix3::RotateX(rot.x);
 	crmat = rMatrix * crmat;
 
 	float theta = 0.0f;
 	float psi = 0.0f;
 	float phi = 0.0f;
 
-	if (abs(crmat.M31()) > 0.999)
+	if (abs(crmat[2][0]) > 0.999)
 	{
 		phi = 0.0f;
 
-		if (crmat.M31() < 0.0f)
+		if (crmat[2][0] < 0.0f)
 		{
 			theta = (float)M_PI / 2.0f;
-			psi = atan2f(crmat.M12(), crmat.M13());
+			psi = atan2f(crmat[0][1], crmat[0][2]);
 		}
 		else
 		{
 			theta = -(float)M_PI / 2.0f;
-			psi = atan2f(-crmat.M12(), -crmat.M13());
+			psi = atan2f(-crmat[0][1], -crmat[0][2]);
 		}
 	}
 	else
 	{
-		theta = -asinf(crmat.M31());
-		psi = atan2f(crmat.M32(), crmat.M33());
-		phi = atan2f(crmat.M21() / cosf(theta), crmat.M11() / cosf(theta));
+		theta = -asinf(crmat[2][0]);
+		psi = atan2f(crmat[2][1], crmat[2][2]);
+		phi = atan2f(crmat[1][0] / cosf(theta), crmat[0][0] / cosf(theta));
 	}
 
-	node->Rotation(bli_vector3(psi, theta, phi));
+	result_node->rotation(bli_vector3(psi, theta, phi));
 
 
 	//Find out what type of m_data is attached to this node
@@ -571,26 +594,26 @@ node* importer::parse_node(char* ptr)
 		case 0: //No m_data
 			break;
 		case 1: //Mesh
-			node->Mesh(ParseMesh(dataPtr));
-			node->Material(ParseMaterial(dataPtr));
+			result_node->mesh(parse_mesh(dataPtr));
+			result_node->material(parse_material(dataPtr));
 			break;
 		case 10: //Lamp
-			node->LightSource(ParseLightSource(dataPtr));
+			result_node->lightsource(parse_light_source(dataPtr));
 			break;
 		}
 	}
 
-	for (int i = 0; i < objectBlocks.size(); i++)
+	for (int i = 0; i < m_object_blocks.size(); i++)
 	{
-		if (objectParentAddr[i] == addr)
-			node->Nodes().push_back(ParseNode(objectBlocks[i]));
+		if (m_object_parent_addr[i] == addr)
+			result_node->nodes().push_back(parse_node(m_object_blocks[i]));
 	}
 
-	return node;
+	return result_node;
 }
-AIOMesh* importer::ParseMesh(uint64_t ptr)
+mesh* importer::parse_mesh(uint64_t pptr)
 {
-	char* ptr = m_address_to_fileblock[ptr];
+	char* ptr = m_address_to_fileblock[pptr];
 	sdna_struct* strc = m_sdna[R<uint32_t>(ptr + 8 + m_ptr_size)];
 	sdna_struct* idstrc = m_sdna[m_name_to_sdna_idx["ID"]];
 
@@ -598,12 +621,12 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 
 	std::string name = std::string(ptr + strc->fields()["id"]->offset() + idstrc->fields()["name"]->offset() + 2);
 
-	auto meshIt = asset->meshes.find(name);
-	if (meshIt != asset->meshes.end())
+	auto meshIt = m_asset->m_meshes.find(name);
+	if (meshIt != m_asset->m_meshes.end())
 		return meshIt->second;
 
 	//Not found -> load it
-	AIOMesh* mesh = new AIOMesh(name);
+	mesh* result_mesh = new mesh(name);
 	
 	bli_vector3* positions;
 	bli_vector3* normals;
@@ -639,7 +662,7 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 
 	#pragma region Face Information < 263
 
-	if (versionInt < 263)
+	if (m_version_int < 263)
 	{
 		faceCount = R<uint32_t>(ptr + strc->fields()["totface"]->offset());
 		triangles = faceCount;
@@ -709,8 +732,14 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 			}
 
 			//Calculate face normal + read face flag
-			faceNormals[i] = bli_vector3::Normalize(bli_vector3::Cross(bli_vector3::Normalize(positions[indices[i * 4 + 1]] - positions[indices[i * 4]]),
-				bli_vector3::Normalize(positions[indices[i * 4 + 2]] - positions[indices[i * 4]])));;
+			//faceNormals[i] = bli_vector3::Normalize(bli_vector3::Cross(bli_vector3::Normalize(positions[indices[i * 4 + 1]] - positions[indices[i * 4]]),
+			//	bli_vector3::Normalize(positions[indices[i * 4 + 2]] - positions[indices[i * 4]])));;
+			glm::vec3 fnorm = glm::cross(
+				glm::normalize(to_glm(positions[indices[i * 4 + 1]]) - to_glm(positions[indices[i * 4]])),
+				glm::normalize(to_glm(positions[indices[i * 4 + 2]]) - to_glm(positions[indices[i * 4]]))
+				);
+			faceNormals[i] = bli_vector3(fnorm.x, fnorm.y, fnorm.z);
+
 			faceFlags[i] = R<char>(mfacePtr + i * mfaceSize + mfaceStrc->fields()["flag"]->offset());
 		}
 
@@ -719,7 +748,7 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 	#pragma endregion
 	#pragma region Face Information >= 263
 
-	else if (versionInt >= 263)
+	else if (m_version_int >= 263)
 	{
 		faceCount = R<uint32_t>(ptr + strc->fields()["totpoly"]->offset());
 
@@ -787,16 +816,18 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 
 			//Face normal
 			int first = 0;
-			faceNormals[face] = bli_vector3();
-			while (faceNormals[face].Length() <= 0.0001 && first < loopLength - 2)
+			glm::vec3 fnorm = glm::vec3(0, 0, 0);
+			while (fnorm.length() <= 0.0001 && first < loopLength - 2)
 			{
-				faceNormals[face] = bli_vector3::Normalize(bli_vector3::Cross(
-					bli_vector3::Normalize(positions[indices[faceStart[face] + 1]] - positions[indices[faceStart[face]]]),
-					bli_vector3::Normalize(positions[indices[faceStart[face] + 2]] - positions[indices[faceStart[face]]])
-					));
+				glm::vec3 p0 = glm::vec3(positions[indices[faceStart[face]]].x(), positions[indices[faceStart[face]]].y(), positions[indices[faceStart[face]]].z());
+				glm::vec3 p1 = glm::vec3(positions[indices[faceStart[face] + 1]].x(), positions[indices[faceStart[face] + 1]].y(), positions[indices[faceStart[face] + 1]].z());
+				glm::vec3 p2 = glm::vec3(positions[indices[faceStart[face] + 2]].x(), positions[indices[faceStart[face] + 2]].y(), positions[indices[faceStart[face] + 2]].z());
+
+				fnorm = glm::cross(glm::normalize(p1 - p0), glm::normalize(p2 - p0));
 				first++;
 			}
 
+			faceNormals[face] = bli_vector3(fnorm.x, fnorm.y, fnorm.z);
 			faceFlags[face] = R<char>(mpolyFaceStart + mpolyStrc->fields()["flag"]->offset());
 		}		
 	}
@@ -833,7 +864,7 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 			if (hasUvs)
 				uv = faceUvs[0][findex];
 
-			std::string key = KeyFromVertex(p, n, uv);
+			std::string key = key_from_vertex(p, n, uv);
 			auto vit = vertexDictionary.find(key);
 			if (vit == vertexDictionary.end())
 			{
@@ -859,11 +890,11 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 				int i1 = (startIndex + findex) % faceLength[face];
 				int i2 = (startIndex + findex + 1) % faceLength[face];
 
-				bli_vector3 p1 = indPositions[indexCache[startIndex]];
-				bli_vector3 p2 = indPositions[indexCache[i1]];
-				bli_vector3 p3 = indPositions[indexCache[i2]];
+				glm::vec3 p1 = to_glm(indPositions[indexCache[startIndex]]);
+				glm::vec3 p2 = to_glm(indPositions[indexCache[i1]]);
+				glm::vec3 p3 = to_glm(indPositions[indexCache[i2]]);
 
-				float mag = bli_vector3::Cross(p2 - p1, p3 - p1).Length();
+				float mag = glm::cross(p2 - p1, p3 - p1).length();
 
 				if (mag < 0.000001)
 				{
@@ -890,21 +921,21 @@ AIOMesh* importer::ParseMesh(uint64_t ptr)
 	#pragma endregion
 
 	//Build mesh
-	mesh->Indices() = indIndices;
-	mesh->Positions() = indPositions;
-	mesh->Normals() = indNormals;
+	result_mesh->indices() = indIndices;
+	result_mesh->positions() = indPositions;
+	result_mesh->normals() = indNormals;
 
 	if (hasUvs)
 	{
-		mesh->TexCoords().push_back(indUVs);
-		CalculateTangents(mesh);
+		result_mesh->tex_coords().push_back(indUVs);
+		calculate_tangents(result_mesh);
 	}
 
-	asset->meshes[mesh->Name()] = mesh;
+	m_asset->m_meshes[result_mesh->name()] = result_mesh;
 
-	return mesh;
+	return result_mesh;
 }
-AIOMaterial* importer::ParseMaterial(uint64_t ptr)
+material* importer::parse_material(uint64_t pptr)
 {
 	sdna_struct* matStrc = m_sdna[m_name_to_sdna_idx["Material"]];
 	sdna_struct* idStrc = m_sdna[m_name_to_sdna_idx["ID"]];
@@ -914,50 +945,48 @@ AIOMaterial* importer::ParseMaterial(uint64_t ptr)
 	sdna_struct* imaStrc = m_sdna[m_name_to_sdna_idx["Image"]];
 	sdna_struct* linkStrc = m_sdna[m_name_to_sdna_idx["Link"]];
 
-	char* meshPtr = m_address_to_fileblock[ptr] + 16 + m_ptr_size;
+	char* meshPtr = m_address_to_fileblock[pptr] + 16 + m_ptr_size;
 	uint64_t matLinkAddr = RPtr(meshPtr + meshStrc->fields()["**mat"]->offset());
 	
 	if (matLinkAddr == 0)
-		return asset->materials["default-material"];
+		return m_asset->m_materials["default-material"];
 
 	char* matLinkPtr = m_address_to_fileblock[matLinkAddr] + 16 + m_ptr_size;
 	uint64_t matAddr = RPtr(matLinkPtr + linkStrc->fields()["*next"]->offset());
 
 	if (matAddr == 0)
-		return asset->materials["default-material"];
+		return m_asset->m_materials["default-material"];
 
 	char* matPtr = m_address_to_fileblock[matAddr] + 16 + m_ptr_size;
 	std::string name(matPtr + matStrc->fields()["id"]->offset() + idStrc->fields()["name"]->offset());
 
-	auto matit = asset->materials.find(name);
-	if (matit != asset->materials.end())
+	auto matit = m_asset->m_materials.find(name);
+	if (matit != m_asset->m_materials.end())
 		return matit->second;
 
 	//Not cached -> load
-	AIOMaterial* material = new AIOMaterial(name);
-	asset->materials[name] = material;
+	material* result_material = new material(name);
+	m_asset->m_materials[name] = result_material;
 
-	material->DiffuseColor(bli_vector3(
+	result_material->diffuse_color(bli_vector3(
 		powf(R<float>(matPtr + matStrc->fields()["r"]->offset()), ONE_OVER_GAMMA),
 		powf(R<float>(matPtr + matStrc->fields()["g"]->offset()), ONE_OVER_GAMMA),
 		powf(R<float>(matPtr + matStrc->fields()["b"]->offset()), ONE_OVER_GAMMA)));
-	material->SpecularColor(bli_vector3(
+	result_material->specular_color(bli_vector3(
 		powf(R<float>(matPtr + matStrc->fields()["specr"]->offset()), ONE_OVER_GAMMA),
 		powf(R<float>(matPtr + matStrc->fields()["specg"]->offset()), ONE_OVER_GAMMA),
 		powf(R<float>(matPtr + matStrc->fields()["specb"]->offset()), ONE_OVER_GAMMA)));
-	material->DiffuseIntensity(R<float>(matPtr + matStrc->fields()["ref"]->offset()));
-	material->SpecularIntensity(R<float>(matPtr + matStrc->fields()["spec"]->offset()));
-	material->EmittingIntensity(R<float>(matPtr + matStrc->fields()["emit"]->offset()));
-	material->Opacity(R<float>(matPtr + matStrc->fields()["alpha"]->offset()));
-	material->Hardness(R<uint16_t>(matPtr + matStrc->fields()["har"]->offset()));
+	result_material->diffuse_intensity(R<float>(matPtr + matStrc->fields()["ref"]->offset()));
+	result_material->specular_intensity(R<float>(matPtr + matStrc->fields()["spec"]->offset()));
+	result_material->emitting_intensity(R<float>(matPtr + matStrc->fields()["emit"]->offset()));
+	result_material->opacity(R<float>(matPtr + matStrc->fields()["alpha"]->offset()));
+	result_material->hardness(R<uint16_t>(matPtr + matStrc->fields()["har"]->offset()));
 
 	int mode = R<uint32_t>(matPtr + matStrc->fields()["mode"]->offset());
-	AIOMaterialMode matMode = AIOMaterialMode::None;
+	material_mode matMode = material_mode::none;
 	if ((mode & 0x4) != 0)
-		matMode = matMode | AIOMaterialMode::Shadeless;
-	if ((mode & 0x4) != 0)
-		matMode = matMode | AIOMaterialMode::Shadeless;
-	material->Mode(matMode);
+		matMode = matMode | material_mode::shadeless;
+	result_material->mode(matMode);
 
 	uint32_t mtexLength = m_sdna_array_length[matStrc->fields()["*mtex"]->name_idx()][0];
 	char* mtexStart = matPtr + matStrc->fields()["*mtex"]->offset();
@@ -984,39 +1013,39 @@ AIOMaterial* importer::ParseMaterial(uint64_t ptr)
 					std::replace(path.begin(), path.end(), '\\', '/');
 
 					if (path[0] != '/' && path.find(':') == path.npos) // add filename to path if not absolute
-						path = filePath.substr(0, filePath.find_last_of('/')) + "/" + path;
+						path = m_file_path.substr(0, m_file_path.find_last_of('/')) + "/" + path;
 
-					auto texit = asset->textures.find(path);
-					AIOTexture* texture = nullptr;
-					if (texit != asset->textures.end())
-						texture = texit->second;
+					auto texit = m_asset->m_textures.find(path);
+					texture* result_texture = nullptr;
+					if (texit != m_asset->m_textures.end())
+						result_texture = texit->second;
 					else
 					{
-						texture = new AIOTexture();
-						texture->Path(path);
-						asset->textures[path] = texture;
+						result_texture = new texture();
+						result_texture->path(path);
+						m_asset->m_textures[path] = result_texture;
 
-						if (versionInt > 263)
+						if (m_version_int > 263)
 						{
 							sdna_struct* colorspaceStrc = m_sdna[m_name_to_sdna_idx["ColorManagedColorspaceSettings"]];
 							std::string colorspace(imaPtr + imaStrc->fields()["colorspace_settings"]->offset() + colorspaceStrc->fields()["name"]->offset());
 
 							if (colorspace == "sRGB")
-								texture->ColorSpace(bli_color_space::SRGB);
+								result_texture->color_space(color_space::SRGB);
 							else if (colorspace == "Linear")
-								texture->ColorSpace(bli_color_space::Linear);
+								result_texture->color_space(color_space::linear);
 							else
-								texture->ColorSpace(bli_color_space::Other);
+								result_texture->color_space(color_space::other);
 						}
 						else
-							texture->ColorSpace(bli_color_space::SRGB);
+							result_texture->color_space(color_space::SRGB);
 					}
 
 					uint16_t mapTo = R<uint16_t>(mtexPtr + mtexStrc->fields()["mapto"]->offset());
 					if ((mapTo & 0x01) != 0)
-						material->Textures()[bli_mapping_target::Diffuse] = texture;
+						result_material->textures()[mapping_target::diffuse] = result_texture;
 					if ((mapTo & 0x02) != 0)
-						material->Textures()[bli_mapping_target::Normals] = texture;
+						result_material->textures()[mapping_target::normals] = result_texture;
 				}
 				else
 				{
@@ -1029,9 +1058,9 @@ AIOMaterial* importer::ParseMaterial(uint64_t ptr)
 	}
 
 
-	return material;
+	return result_material;
 }
-AIOLightSource* importer::ParseLightSource(uint64_t ptr)
+light_source* importer::parse_light_source(uint64_t ptr)
 {
 	sdna_struct* lampStrc = m_sdna[m_name_to_sdna_idx["Lamp"]];
 	sdna_struct* idStrc = m_sdna[m_name_to_sdna_idx["ID"]];
@@ -1039,30 +1068,30 @@ AIOLightSource* importer::ParseLightSource(uint64_t ptr)
 	char* lampPtr = m_address_to_fileblock[ptr] + 16 + m_ptr_size;
 	std::string name(lampPtr + lampStrc->fields()["id"]->offset() + idStrc->fields()["name"]->offset());
 
-	AIOLightSource* light = new AIOLightSource(name);
+	light_source* light = new light_source(name);
 
 	uint16_t type = R<uint16_t>(lampPtr + lampStrc->fields()["type"]->offset());
 
 	switch (type)
 	{
 	case 0:
-		light->Type(AIOLightSourceType::PointLight);
+		light->type(light_source_type::pointlight);
 		break;
 	case 1:
-		light->Type(AIOLightSourceType::DirectionalLight);
+		light->type(light_source_type::directionallight);
 		break;
 	case 2:
-		light->Type(AIOLightSourceType::SpotLight);
+		light->type(light_source_type::spotlight);
 		break;
 	}
 
-	light->Color(bli_vector3(
+	light->color(bli_vector3(
 		pow(R<float>(lampPtr + lampStrc->fields()["r"]->offset()), ONE_OVER_GAMMA),
 		pow(R<float>(lampPtr + lampStrc->fields()["g"]->offset()), ONE_OVER_GAMMA),
 		pow(R<float>(lampPtr + lampStrc->fields()["b"]->offset()), ONE_OVER_GAMMA)));
-	light->Intensity(R<float>(lampPtr + lampStrc->fields()["energy"]->offset()));
-	light->AngularAttenuation(R<float>(lampPtr + lampStrc->fields()["spotblend"]->offset()));
-	light->Angle(R<float>(lampPtr + lampStrc->fields()["spotsize"]->offset()));
+	light->intensity(R<float>(lampPtr + lampStrc->fields()["energy"]->offset()));
+	light->angular_attenuation(R<float>(lampPtr + lampStrc->fields()["spotblend"]->offset()));
+	light->angle(R<float>(lampPtr + lampStrc->fields()["spotsize"]->offset()));
 
 	float dist = R<float>(lampPtr + lampStrc->fields()["dist"]->offset());
 	uint16_t falloffType = R<uint16_t>(lampPtr + lampStrc->fields()["falloff_type"]->offset());
@@ -1070,71 +1099,71 @@ AIOLightSource* importer::ParseLightSource(uint64_t ptr)
 	switch (falloffType)
 	{
 	case 1:
-		light->Attenuation(bli_vector3(1.0f, 1.0f / dist, 0.0f));
+		light->attenuation(bli_vector3(1.0f, 1.0f / dist, 0.0f));
 		break;
 	case 2:
-		light->Attenuation(bli_vector3(1.0f, 0.0f, 1.0f / (dist * dist)));
+		light->attenuation(bli_vector3(1.0f, 0.0f, 1.0f / (dist * dist)));
 		break;
 	default:
-		light->Attenuation(bli_vector3(1.0f, 0.0f, 0.0f));
+		light->attenuation(bli_vector3(1.0f, 0.0f, 0.0f));
 		break;
 	}
 
-	light->Distance(dist);
+	light->distance(dist);
 
 	auto mode = R<uint32_t>(lampPtr + lampStrc->fields()["mode"]->offset());
 
-	light->HasClippingSphere((mode & 0x40) == 1);
+	light->has_clipped_sphere((mode & 0x40) == 1);
 
 	return light;
 }
 
-std::string importer::KeyFromVertex(bli_vector3 _position, bli_vector3 _normal, bli_vector2 _uv)
+std::string importer::key_from_vertex(bli_vector3 _position, bli_vector3 _normal, bli_vector2 _uv)
 {
 	std::stringstream ss;
-	ss << std::fixed << std::setprecision(4) << _position.X() << ";" << _position.Y() << ";" << _position.Z() << ";" << _normal.X() << ";" << _normal.Y() << ";" << _normal.Z()
-		<< ";" << _uv.X() << "; " << _uv.Y();
+	ss << std::fixed << std::setprecision(4) << _position.x() << ";" << _position.y() << ";" << _position.z() << ";" << _normal.x() << ";" << _normal.y() << ";" << _normal.z()
+		<< ";" << _uv.x() << "; " << _uv.y();
 	return ss.str();
 }
-void importer::CalculateTangents(AIOMesh* _mesh)
+void importer::calculate_tangents(mesh* _mesh)
 {
-	for (std::vector<bli_vector2>& uvs : _mesh->TexCoords())
+	for (std::vector<bli_vector2>& uvs : _mesh->tex_coords())
 	{
 		std::vector<bli_vector4> finalTangents(uvs.size());
-		bli_vector3* vertexTangents = new bli_vector3[uvs.size()];
-		bli_vector3* vertexBitangents = new bli_vector3[uvs.size()];
+		glm::vec3* vertexTangents = new glm::vec3[uvs.size()];
+		glm::vec3* vertexBitangents = new glm::vec3[uvs.size()];
 
-		for (int i = 0; i < _mesh->Indices().size(); i+=3)
+		for (int i = 0; i < _mesh->indices().size(); i+=3)
 		{
-			unsigned int i1 = _mesh->Indices()[i];
-			unsigned int i2 = _mesh->Indices()[i+1];
-			unsigned int i3 = _mesh->Indices()[i+2];
+			unsigned int i1 = _mesh->indices()[i];
+			unsigned int i2 = _mesh->indices()[i+1];
+			unsigned int i3 = _mesh->indices()[i+2];
 
-			bli_vector2 uv1 = uvs[i1];
-			bli_vector2 uv2 = uvs[i2];
-			bli_vector2 uv3 = uvs[i3];
+			auto uv1 = to_glm(uvs[i1]);
+			auto uv2 = to_glm(uvs[i2]);
+			auto uv3 = to_glm(uvs[i3]);
 
-			bli_vector3 p1 = _mesh->Positions()[i1];
-			bli_vector3 p2 = _mesh->Positions()[i2];
-			bli_vector3 p3 = _mesh->Positions()[i3];
+			auto p1 = to_glm(_mesh->positions()[i1]);
+			auto p2 = to_glm(_mesh->positions()[i2]);
+			auto p3 = to_glm(_mesh->positions()[i3]);
 
-			bli_vector3 e1 = p2 - p1;
-			bli_vector3 e2 = p3 - p1;
+			auto e1 = p2 - p1;
+			auto e2 = p3 - p1;
 
-			bli_vector2 uve1 = uv2 - uv1;
-			bli_vector2 uve2 = uv3 - uv1;
+			auto uve1 = uv2 - uv1;
+			auto uve2 = uv3 - uv1;
 
-			float area = 1.0f / (uve1.X() * uve2.Y() + uve1.Y() * uve2.X());
+			float area = 1.0f / (uve1.x * uve2.y + uve1.y * uve2.x);
 
-			bli_vector3 svec(
-				uve2.Y() * e1.X() - uve1.Y() * e2.X(),
-				uve2.Y() * e1.Y() - uve1.Y() * e2.Y(),
-				uve2.Y() * e1.Z() - uve1.Y() * e2.Z());
+			glm::vec3 svec(
+				uve2.y * e1.x - uve1.y * e2.x,
+				uve2.y * e1.y - uve1.y * e2.y,
+				uve2.y * e1.z - uve1.y * e2.z);
 
-			bli_vector3 tvec(
-				uve1.X() * e2.X() - uve2.X() * e1.X(),
-				uve1.X() * e2.Y() - uve2.X() * e1.Y(),
-				uve1.X() * e2.Z() - uve2.X() * e1.Z());
+			glm::vec3 tvec(
+				uve1.x * e2.x - uve2.x * e1.x,
+				uve1.x * e2.y - uve2.x * e1.y,
+				uve1.x * e2.z - uve2.x * e1.z);
 
 			vertexTangents[i1] += svec;
 			vertexTangents[i2] += svec;
@@ -1147,125 +1176,126 @@ void importer::CalculateTangents(AIOMesh* _mesh)
 		for (int i = 0; i < uvs.size(); i++)
 		{
 			float headness = 1.0f;
-			if (bli_vector3::Dot(bli_vector3::Cross(_mesh->Normals()[i], vertexTangents[i]), vertexBitangents[i]) < 0.0f)
+			if (glm::dot(glm::cross(to_glm(_mesh->normals()[i]), vertexTangents[i]), vertexBitangents[i]) < 0.0f)
 				headness = -1.0f;
-			finalTangents[i] = bli_vector4(bli_vector3::Normalize(vertexTangents[i] - _mesh->Normals()[i] * bli_vector3::Dot(vertexTangents[i], _mesh->Normals()[i])), headness);
+			glm::vec4 ftang = glm::vec4(glm::normalize(vertexTangents[i] - to_glm(_mesh->normals()[i]) * glm::dot(vertexTangents[i], to_glm(_mesh->normals()[i]))), headness);
+			finalTangents[i] = bli_vector4(ftang.x, ftang.y, ftang.z, ftang.w);
 		}
 
-		_mesh->Tangents().push_back(finalTangents);
+		_mesh->tangents().push_back(finalTangents);
 	}
 }
 
 
-bool importer::CheckStructure(const std::string& _path)
+bool importer::check_structure(const std::string& _path)
 {
-	LoadFile(_path);
+	load_file(_path);
 	bool result = true;
 
-	std::cout << "Checking Version " << versionNumber << " (x" << m_ptr_size * 8 << ")";
+	std::cout << "Checking Version " << m_version_number << " (x" << m_ptr_size * 8 << ")";
 
-	result &= CheckStructure("Object", "id", "ID");
-	result &= CheckStructure("Object", "loc", "float");
-	result &= CheckStructure("Object", "rot", "float");
-	result &= CheckStructure("Object", "size", "float");
-	result &= CheckStructure("Object", "parentinv", "float");
-	result &= CheckStructure("Object", "*m_data", "void");
-	result &= CheckStructure("Object", "type", "short");
-	result &= CheckStructure("Object", "*parent", "Object");
+	result &= check_structure("Object", "id", "ID");
+	result &= check_structure("Object", "loc", "float");
+	result &= check_structure("Object", "rot", "float");
+	result &= check_structure("Object", "size", "float");
+	result &= check_structure("Object", "parentinv", "float");
+	result &= check_structure("Object", "*m_data", "void");
+	result &= check_structure("Object", "type", "short");
+	result &= check_structure("Object", "*parent", "Object");
 
-	result &= CheckStructure("Lamp", "type", "short");
-	result &= CheckStructure("Lamp", "r", "float");
-	result &= CheckStructure("Lamp", "g", "float");
-	result &= CheckStructure("Lamp", "b", "float");
-	result &= CheckStructure("Lamp", "energy", "float");
-	result &= CheckStructure("Lamp", "spotsize", "float");
-	result &= CheckStructure("Lamp", "spotblend", "float");
-	result &= CheckStructure("Lamp", "dist", "float");
-	result &= CheckStructure("Lamp", "falloff_type", "short");
+	result &= check_structure("Lamp", "type", "short");
+	result &= check_structure("Lamp", "r", "float");
+	result &= check_structure("Lamp", "g", "float");
+	result &= check_structure("Lamp", "b", "float");
+	result &= check_structure("Lamp", "energy", "float");
+	result &= check_structure("Lamp", "spotsize", "float");
+	result &= check_structure("Lamp", "spotblend", "float");
+	result &= check_structure("Lamp", "dist", "float");
+	result &= check_structure("Lamp", "falloff_type", "short");
 
-	result &= CheckStructure("Mesh", "id", "ID");
-	result &= CheckStructure("Mesh", "totvert", "int");
-	result &= CheckStructure("Mesh", "*mvert", "MVert");
-	result &= CheckStructure("Mesh", "**mat", "Material");
-	result &= CheckStructure("Mesh", "totface", "int", 0, 263);
-	result &= CheckStructure("Mesh", "*mface", "MFace", 0, 263);
-	result &= CheckStructure("Mesh", "*mtface", "MTFace", 0, 263);
-	result &= CheckStructure("Mesh", "totpoly", "int", 264);
-	result &= CheckStructure("Mesh", "*mpoly", "MPoly", 264);
-	result &= CheckStructure("Mesh", "*mloop", "MLoop", 264);
-	result &= CheckStructure("Mesh", "*mloopuv", "MLoopUV", 264);
+	result &= check_structure("Mesh", "id", "ID");
+	result &= check_structure("Mesh", "totvert", "int");
+	result &= check_structure("Mesh", "*mvert", "MVert");
+	result &= check_structure("Mesh", "**mat", "Material");
+	result &= check_structure("Mesh", "totface", "int", 0, 263);
+	result &= check_structure("Mesh", "*mface", "MFace", 0, 263);
+	result &= check_structure("Mesh", "*mtface", "MTFace", 0, 263);
+	result &= check_structure("Mesh", "totpoly", "int", 264);
+	result &= check_structure("Mesh", "*mpoly", "MPoly", 264);
+	result &= check_structure("Mesh", "*mloop", "MLoop", 264);
+	result &= check_structure("Mesh", "*mloopuv", "MLoopUV", 264);
 
-	result &= CheckStructure("MPoly", "loopstart", "int", 264);
-	result &= CheckStructure("MPoly", "totloop", "int", 264);
-	result &= CheckStructure("MPoly", "flag", "char", 264);
-	result &= CheckStructure("MLoop", "v", "int", 264);
-	result &= CheckStructure("MLoopUV", "uv", "float", 264);
+	result &= check_structure("MPoly", "loopstart", "int", 264);
+	result &= check_structure("MPoly", "totloop", "int", 264);
+	result &= check_structure("MPoly", "flag", "char", 264);
+	result &= check_structure("MLoop", "v", "int", 264);
+	result &= check_structure("MLoopUV", "uv", "float", 264);
 
-	result &= CheckStructure("MFace", "v1", "int", 0, 263);
-	result &= CheckStructure("MFace", "v2", "int", 0, 263);
-	result &= CheckStructure("MFace", "v3", "int", 0, 263);
-	result &= CheckStructure("MFace", "v4", "int", 0, 263);
-	result &= CheckStructure("MFace", "flag", "char", 0, 263);
-	result &= CheckStructure("MTFace", "uv", "float", 0, 263);
+	result &= check_structure("MFace", "v1", "int", 0, 263);
+	result &= check_structure("MFace", "v2", "int", 0, 263);
+	result &= check_structure("MFace", "v3", "int", 0, 263);
+	result &= check_structure("MFace", "v4", "int", 0, 263);
+	result &= check_structure("MFace", "flag", "char", 0, 263);
+	result &= check_structure("MTFace", "uv", "float", 0, 263);
 
 	
 
-	result &= CheckStructure("Material", "r", "float");
-	result &= CheckStructure("Material", "g", "float");
-	result &= CheckStructure("Material", "b", "float");
-	result &= CheckStructure("Material", "specr", "float");
-	result &= CheckStructure("Material", "specg", "float");
-	result &= CheckStructure("Material", "specb", "float");
-	result &= CheckStructure("Material", "ref", "float");
-	result &= CheckStructure("Material", "spec", "float");
-	result &= CheckStructure("Material", "emit", "float");
-	result &= CheckStructure("Material", "alpha", "float");
-	result &= CheckStructure("Material", "har", "short");
-	result &= CheckStructure("Material", "mode", "int");
-	result &= CheckStructure("Material", "*mtex", "MTex");
+	result &= check_structure("Material", "r", "float");
+	result &= check_structure("Material", "g", "float");
+	result &= check_structure("Material", "b", "float");
+	result &= check_structure("Material", "specr", "float");
+	result &= check_structure("Material", "specg", "float");
+	result &= check_structure("Material", "specb", "float");
+	result &= check_structure("Material", "ref", "float");
+	result &= check_structure("Material", "spec", "float");
+	result &= check_structure("Material", "emit", "float");
+	result &= check_structure("Material", "alpha", "float");
+	result &= check_structure("Material", "har", "short");
+	result &= check_structure("Material", "mode", "int");
+	result &= check_structure("Material", "*mtex", "MTex");
 
-	result &= CheckStructure("MTex", "*tex", "Tex");
-	result &= CheckStructure("MTex", "mapto", "short");
-	result &= CheckStructure("Tex", "*ima", "Image");
-	result &= CheckStructure("Image", "name", "char");
-	result &= CheckStructure("Image", "colorspace_settings", "ColorManagedColorspaceSettings", 264);
-	result &= CheckStructure("ColorManagedColorspaceSettings", "name", "char", 264);
+	result &= check_structure("MTex", "*tex", "Tex");
+	result &= check_structure("MTex", "mapto", "short");
+	result &= check_structure("Tex", "*ima", "Image");
+	result &= check_structure("Image", "name", "char");
+	result &= check_structure("Image", "colorspace_settings", "ColorManagedColorspaceSettings", 264);
+	result &= check_structure("ColorManagedColorspaceSettings", "name", "char", 264);
 
-	result &= CheckStructure("MVert", "co", "float");
-	result &= CheckStructure("MVert", "no", "short");
+	result &= check_structure("MVert", "co", "float");
+	result &= check_structure("MVert", "no", "short");
 
-	result &= CheckStructure("ID", "name", "char");
-	result &= CheckStructure("Link", "*next", "Link");
+	result &= check_structure("ID", "name", "char");
+	result &= check_structure("Link", "*next", "Link");
 
 	if (result)
 		std::cout << "        ....    ok!" << std::endl;
 
 	return result;
 }
-bool importer::CheckStructure(const std::string& _strcName, const std::string& _fieldName, const std::string& _fieldType, int _minVersion, int _maxVersion)
+bool importer::check_structure(const std::string& strcName, const std::string& fieldName, const std::string& fieldType, int minVersion, int maxVersion)
 {
-	if (_minVersion <= versionInt && _maxVersion >= versionInt)
+	if (minVersion <= m_version_int && maxVersion >= m_version_int)
 	{
-		auto sdnaId = m_name_to_sdna_idx[_strcName];
+		auto sdnaId = m_name_to_sdna_idx[strcName];
 		if (m_sdna.find(sdnaId) == m_sdna.end())
 		{
-			std::cout << std::endl << "Unable to find structure " << _strcName << std::endl;
+			std::cout << std::endl << "Unable to find structure " << strcName << std::endl;
 			return false;
 		}
 
 		sdna_struct* strc = m_sdna[sdnaId];
 
-		if (strc->fields().find(_fieldName) == strc->fields().end())
+		if (strc->fields().find(fieldName) == strc->fields().end())
 		{
-			std::cout << std::endl << "Unable to find field " << _strcName << "." << _fieldName << std::endl;
+			std::cout << std::endl << "Unable to find field " << strcName << "." << fieldName << std::endl;
 			return false;
 		}
 
-		sdna_field* field = strc->fields()[_fieldName];
+		sdna_field* field = strc->fields()[fieldName];
 
-		if (m_sdna_types[field->type_idx()] != _fieldType)
+		if (m_sdna_types[field->type_idx()] != fieldType)
 		{
-			std::cout << std::endl << "Field " << _strcName << "." << _fieldName << " is " << m_sdna_types[field->type_idx()] << " but should be " << _fieldType << std::endl;
+			std::cout << std::endl << "Field " << strcName << "." << fieldName << " is " << m_sdna_types[field->type_idx()] << " but should be " << fieldType << std::endl;
 			return false;
 		}
 	}
