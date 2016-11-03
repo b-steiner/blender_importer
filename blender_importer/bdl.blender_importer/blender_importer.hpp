@@ -1,3 +1,23 @@
+/**************************************************************************************
+**
+** Copyright (C) 2016 Bernhard Steiner
+**
+** This file is part of the blender_importer library
+**
+** This product is licensed under the GNU General Public License version 3.
+** The license is as published by the Free Software Foundation published at
+** https://www.gnu.org/licenses/gpl-3.0.html.
+**
+** Alternatively, this product is licensed under the GNU Lesser General Public
+** License version 3 for non-commercial use. The license is as published by the
+** Free Software Foundation published at https://www.gnu.org/licenses/lgpl-3.0.html.
+**
+** Feel free to contact us if you have any questions about licensing or want
+** to use the library in a commercial closed source product.
+**
+**************************************************************************************/
+
+
 #pragma once
 
 #ifndef BLI_BUILD
@@ -33,10 +53,20 @@
 
 #ifndef BLI_BUILD
 
-#include "model/texture.hpp"
+#include "importer/importer.hpp"
+
 #include "model/animation.hpp"
+#include "model/asset.hpp"
+#include "model/light_source.hpp"
+#include "model/material.hpp"
+#include "model/mesh.hpp"
+#include "model/node.hpp"
+#include "model/texture.hpp"
 
 #include "util/bli_exception.hpp"
 #include "util/bli_vector2.hpp"
+#include "util/bli_vector3.hpp"
+#include "util/bli_vector4.hpp"
+#include "util/bli_matrix4.hpp"
 
 #endif

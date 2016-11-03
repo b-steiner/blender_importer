@@ -18,5 +18,8 @@
     <ClCompile Include="bdl.blender_to_xml\main.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="bdl.blender_importer_test\main.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
 </Project>

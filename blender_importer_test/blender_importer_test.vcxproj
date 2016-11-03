@@ -11,7 +11,7 @@
     </ProjectConfiguration>
   </ItemGroup>
   <PropertyGroup Label="Globals">
-    <ProjectGuid>{A755C7B8-3BCF-433E-8F83-87E3E014E7E8}</ProjectGuid>
+    <ProjectGuid>{B701A895-D775-4D0A-81D2-F35BCBB2367B}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>BlenderToXML</RootNamespace>
   </PropertyGroup>
@@ -108,7 +108,7 @@
     </CustomBuildStep>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="bdl.blender_to_xml\main.cpp" />
+    <ClCompile Include="bdl.blender_importer_test\main.cpp" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -1,24 +1,38 @@
-#include <BlubbEngine2_AssetIO\AssetIO.hpp>
+/**************************************************************************************
+**
+** Copyright (C) 2016 Bernhard Steiner
+**
+** This file is part of the blender_importer library
+**
+** This product is licensed under the GNU General Public License version 3.
+** The license is as published by the Free Software Foundation published at
+** https://www.gnu.org/licenses/gpl-3.0.html.
+**
+** Alternatively, this product is licensed under the GNU Lesser General Public
+** License version 3 for non-commercial use. The license is as published by the
+** Free Software Foundation published at https://www.gnu.org/licenses/lgpl-3.0.html.
+**
+** Feel free to contact us if you have any questions about licensing or want
+** to use the library in a commercial closed source product.
+**
+**************************************************************************************/
+
+
+#include <bdl.blender_importer/blender_importer.hpp>
 
 #include <Windows.h>
 #include <vector>
 #include <string>
 
 using namespace std;
-using namespace AssetIO;
-
-#define TEST_MODE
+using namespace bdl;
 
 vector<string> get_all_files_names_within_folder(const string& folder);
 bool hasEnding(std::string const &fullString, std::string const &ending);
 
 void main(int argc, char* argv[])
 {
-	AIOBlenderImporter importer;
-#ifndef TEST_MODE
-	importer.ToXML(argv[1], argv[2]);
-#else
-	vector<string> pathes = get_all_files_names_within_folder("..\\TestData\\");
+	vector<string> pathes = get_all_files_names_within_folder("..\\test_data\\");
 
 	for (auto file : pathes)
 	{
@@ -26,22 +40,21 @@ void main(int argc, char* argv[])
 		{
 			try
 			{
-				AIOBlenderImporter importer;
-				if (importer.CheckStructure(std::string("..\\TestData\\") + file))
+				blender_importer::importer importer;
+				if (importer.check_structure(std::string("..\\test_data\\") + file))
 				{
-					auto asset = importer.Load(std::string("..\\TestData\\") + file);
+					auto asset = importer.load(std::string("..\\test_data\\") + file);
 					delete asset;
 				}
 			}
-			catch (AIOException& excpt)
+			catch (blender_importer::bli_exception& excpt)
 			{
-				std::cout << excpt.Message() << std::endl;
+				std::cout << excpt.message() << std::endl;
 			}
 		}
 	}
 
 	system("PAUSE");
-#endif
 }
 
 wchar_t *convertCharArrayToLPCWSTR(const char* charArray)
