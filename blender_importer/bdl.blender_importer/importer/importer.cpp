@@ -27,7 +27,8 @@
 #include <glm/gtc/type_ptr.hpp>
 
 //This has to contain the correct gamma value for the system. For windows this is 1/2.2 = 0.45454545
-#define ONE_OVER_GAMMA 0.4545454545f
+//#define ONE_OVER_GAMMA 0.4545454545f
+#define ONE_OVER_GAMMA 1
 
 using namespace bdl::blender_importer;
 
@@ -49,7 +50,11 @@ glm::vec3 to_glm(const bli_vector3& v)
 
 
 importer::importer() : m_data(nullptr)
-{ }
+{ 
+
+	auto m = glm::rotate(glm::mat4(1.0f), 45.0f, glm::vec3(0, 0, 1)) * glm::translate(glm::mat4(1.0f), glm::vec3(0, 0, 5));
+
+}
 importer::~importer()
 {
 	for (auto str : m_sdna)
@@ -550,10 +555,11 @@ node* importer::parse_node(char* ptr)
 	//So we have to get the parameters of this matrix and correct our transformations.
 	//bli_matrix4 parentInv = R<bli_matrix4>(m_data + strc->fields()["parentinv"]->offset());
 	glm::mat4 parentInv = glm::make_mat4((float*)(m_data + strc->fields()["parentinv"]->offset()));
+
 	glm::vec3 parentScale(
-		parentInv[1].length(),
-		parentInv[1].length(),
-		parentInv[1].length()
+		glm::length(parentInv[0]),
+		glm::length(parentInv[1]),
+		glm::length(parentInv[2])
 		);
 
 	result_node->scale(bli_vector3(size.x * parentScale.x, size.y * parentScale.y, size.z * parentScale.z));
@@ -837,7 +843,7 @@ mesh* importer::parse_mesh(uint64_t pptr)
 			//Face normal
 			int first = 0;
 			glm::vec3 fnorm = glm::vec3(0, 0, 0);
-			while (fnorm.length() <= 0.0001 && first < loopLength - 2)
+			while (glm::length(fnorm) <= 0.0001 && first < loopLength - 2)
 			{
 				glm::vec3 p0 = glm::vec3(positions[indices[faceStart[face]]].x(), positions[indices[faceStart[face]]].y(), positions[indices[faceStart[face]]].z());
 				glm::vec3 p1 = glm::vec3(positions[indices[faceStart[face] + 1]].x(), positions[indices[faceStart[face] + 1]].y(), positions[indices[faceStart[face] + 1]].z());
@@ -914,7 +920,7 @@ mesh* importer::parse_mesh(uint64_t pptr)
 				glm::vec3 p2 = to_glm(indPositions[indexCache[i1]]);
 				glm::vec3 p3 = to_glm(indPositions[indexCache[i2]]);
 
-				float mag = glm::cross(p2 - p1, p3 - p1).length();
+				float mag = glm::length(glm::cross(p2 - p1, p3 - p1));
 
 				if (mag < 0.000001)
 				{
@@ -978,7 +984,7 @@ material* importer::parse_material(uint64_t pptr)
 		return m_asset->m_materials["default-material"];
 
 	char* matPtr = m_address_to_fileblock[matAddr] + 16 + m_ptr_size;
-	std::string name(matPtr + matStrc->fields()["id"]->offset() + idStrc->fields()["name"]->offset());
+	std::string name(matPtr + matStrc->fields()["id"]->offset() + idStrc->fields()["name"]->offset() + 2);
 
 	auto matit = m_asset->m_materials.find(name);
 	if (matit != m_asset->m_materials.end())
@@ -1006,6 +1012,8 @@ material* importer::parse_material(uint64_t pptr)
 	material_mode matMode = material_mode::none;
 	if ((mode & 0x4) != 0)
 		matMode = matMode | material_mode::shadeless;
+	if ((mode & 0x10000) != 0)
+		matMode = matMode | material_mode::transparent;
 	result_material->mode(matMode);
 
 	uint32_t mtexLength = m_sdna_array_length[matStrc->fields()["*mtex"]->name_idx()][0];
@@ -1086,7 +1094,7 @@ light_source* importer::parse_light_source(uint64_t ptr)
 	sdna_struct* idStrc = m_sdna[m_name_to_sdna_idx["ID"]];
 
 	char* lampPtr = m_address_to_fileblock[ptr] + 16 + m_ptr_size;
-	std::string name(lampPtr + lampStrc->fields()["id"]->offset() + idStrc->fields()["name"]->offset());
+	std::string name(lampPtr + lampStrc->fields()["id"]->offset() + idStrc->fields()["name"]->offset() + 2);
 
 	light_source* light = new light_source(name);
 
@@ -1133,7 +1141,7 @@ light_source* importer::parse_light_source(uint64_t ptr)
 
 	auto mode = R<uint32_t>(lampPtr + lampStrc->fields()["mode"]->offset());
 
-	light->has_clipped_sphere((mode & 0x40) == 1);
+	light->has_clipped_sphere((mode & 0x40) != 0);
 
 	return light;
 }
