@@ -196,16 +196,39 @@ uint64_t importer::sdna_field_to_xml(char* ptr, sdna_field* field, std::ofstream
 			uint64_t arraySize = 0;
 
 			for (uint32_t arrayIdx = 0; arrayIdx < m_sdna_array_length[field->name_idx()][0]; arrayIdx++)
+			{
 				arraySize += value_to_xml(ptr + field->offset() + arraySize, field->type_idx(), m_sdna_type_sizes[field->type_idx()], m_sdna_is_pointer[field->name_idx()], out, intent);
+				if (m_sdna_types[field->type_idx()] != "char")
+					out << " ";
+			}
 
 			size += arraySize;
 		}
 		if (m_sdna_array_length[field->name_idx()].size() == 2)
 		{
-			uint64_t arraySize = m_sdna_type_sizes[field->type_idx()];
+			uint64_t arraySize = 0;
+
+			out << "\n" << intent << "\t";
+			
+			for (uint32_t arrayIdx1 = 0; arrayIdx1 < m_sdna_array_length[field->name_idx()][0]; arrayIdx1++)
+			{
+				for (uint32_t arrayIdx2 = 0; arrayIdx2 < m_sdna_array_length[field->name_idx()][1]; arrayIdx2++)
+				{
+					arraySize += value_to_xml(ptr + field->offset() + arraySize, field->type_idx(), m_sdna_type_sizes[field->type_idx()], m_sdna_is_pointer[field->name_idx()], out, intent);
+					if (m_sdna_types[field->type_idx()] != "char")
+						out << " ";
+				}
+
+				out << "\n" << intent << "\t";
+			}
+
+			size += arraySize;
+			out << "\n" << intent;
+
+			/*uint64_t arraySize = m_sdna_type_sizes[field->type_idx()];
 			for (auto l : m_sdna_array_length[field->name_idx()])
 				arraySize *= l;
-			size += arraySize;
+			size += arraySize;*/
 		}
 
 		out << "</Array>" << std::endl << intent;
@@ -628,6 +651,11 @@ node* importer::parse_node(char* ptr)
 			break;
 		}
 	}
+
+	//Check if there is an animation present
+	auto anim_data_ptr = RPtr(m_data + strc->fields()["*adt"]->offset());
+	if (anim_data_ptr != 0)
+		result_node->animation(parse_animation(anim_data_ptr));
 
 	for (int i = 0; i < m_object_blocks.size(); i++)
 	{
@@ -1119,7 +1147,12 @@ light_source* importer::parse_light_source(uint64_t ptr)
 		pow(R<float>(lampPtr + lampStrc->fields()["b"]->offset()), ONE_OVER_GAMMA)));
 	light->intensity(R<float>(lampPtr + lampStrc->fields()["energy"]->offset()));
 	light->angular_attenuation(R<float>(lampPtr + lampStrc->fields()["spotblend"]->offset()));
-	light->angle(R<float>(lampPtr + lampStrc->fields()["spotsize"]->offset()));
+	float angle = R<float>(lampPtr + lampStrc->fields()["spotsize"]->offset());
+
+	if (m_version_int < 270)
+		angle = angle / 180.0f * M_PI;
+
+	light->angle(angle);
 
 	float dist = R<float>(lampPtr + lampStrc->fields()["dist"]->offset());
 	uint16_t falloffType = R<uint16_t>(lampPtr + lampStrc->fields()["falloff_type"]->offset());
@@ -1144,6 +1177,107 @@ light_source* importer::parse_light_source(uint64_t ptr)
 	light->has_clipped_sphere((mode & 0x40) != 0);
 
 	return light;
+}
+animation* importer::parse_animation(uint64_t ptr)
+{
+	auto anim_data_strc = m_sdna[m_name_to_sdna_idx["AnimData"]];
+	auto baction_data_strc = m_sdna[m_name_to_sdna_idx["bAction"]];
+	auto listbase_data_strc = m_sdna[m_name_to_sdna_idx["ListBase"]];
+	auto fcurve_data_strc = m_sdna[m_name_to_sdna_idx["FCurve"]];
+	auto link_data_strc = m_sdna[m_name_to_sdna_idx["Link"]];
+	auto bezt_data_strc = m_sdna[m_name_to_sdna_idx["BezTriple"]];
+	sdna_struct* idStrc = m_sdna[m_name_to_sdna_idx["ID"]];
+
+	auto anim_data = m_address_to_fileblock[ptr] + 16 + m_ptr_size;
+	auto action_ptr = RPtr(anim_data + anim_data_strc->fields()["*action"]->offset());
+
+	if (action_ptr == 0)
+		return nullptr;
+
+	auto action_data = m_address_to_fileblock[action_ptr] + 16 + m_ptr_size;
+	auto curve_ptr = RPtr(action_data + baction_data_strc->fields()["curves"]->offset() + listbase_data_strc->fields()["*first"]->offset());
+	
+	if (curve_ptr == 0)
+		return nullptr;
+
+	animation* anim = new animation(std::string(action_data + baction_data_strc->fields()["id"]->offset() + idStrc->fields()["name"]->offset() + 2));
+
+	while (curve_ptr != 0)
+	{
+		auto curve_data = m_address_to_fileblock[curve_ptr] + 16 + m_ptr_size;
+
+		//Mapping target
+		auto rna_link_ptr = RPtr(curve_data + fcurve_data_strc->fields()["*rna_path"]->offset());
+		auto rna_data_str = m_address_to_fileblock[rna_link_ptr] + 16 + m_ptr_size;
+		auto array_idx = R<int32_t>(curve_data + fcurve_data_strc->fields()["array_index"]->offset());
+
+		int base_target = -1;
+		if (strcmp(rna_data_str, "location") == 0)
+			base_target = (int)animation_target::locX;
+		else if (strcmp(rna_data_str, "rotation_euler") == 0)
+			base_target = (int)animation_target::rotX;
+		else if (strcmp(rna_data_str, "scale") == 0)
+			base_target = (int)animation_target::sizeX;
+		else
+		{
+			std::cout << "Animation to unsupported target found: " << rna_data_str;
+			continue;
+		}
+
+		anim->target().push_back((animation_target)(base_target + array_idx));
+
+		//Control points
+		auto bezt_ptr = RPtr(curve_data + fcurve_data_strc->fields()["*bezt"]->offset());
+		auto bezt_data = m_address_to_fileblock[bezt_ptr];
+		auto bezt_count = R<uint32_t>(bezt_data + 12 + m_ptr_size);
+		bezt_data += 16 + m_ptr_size;
+		auto bezt_size = m_sdna_type_sizes[fcurve_data_strc->fields()["*bezt"]->type_idx()];
+
+		std::vector<bli_vector2> points;
+		points.reserve(bezt_count);
+		std::vector<bli_vector2> prev_vec;
+		prev_vec.reserve(bezt_count);
+		std::vector<bli_vector2> next_vec;
+		next_vec.reserve(bezt_count);
+		std::vector<interpolation_mode> interp;
+		interp.reserve(bezt_count);
+
+		for (int bezi = 0; bezi < bezt_count; bezi++)
+		{
+			auto current_bezt = bezt_data + bezi * bezt_size;
+
+			auto vec_ptr = current_bezt + bezt_data_strc->fields()["vec"]->offset();
+			bli_vector2 prev(*((float*)vec_ptr), *((float*)(vec_ptr + 4)));
+			vec_ptr += 12;
+			bli_vector2 pt(*((float*)vec_ptr), *((float*)(vec_ptr + 4)));
+			vec_ptr += 12;
+			bli_vector2 next(*((float*)vec_ptr), *((float*)(vec_ptr + 4)));
+
+			if (m_version_int >= 271)
+			{
+				char ipo = R<char>(current_bezt + bezt_data_strc->fields()["ipo"]->offset());
+				interp.push_back((interpolation_mode)ipo);
+			}
+			else
+			{
+				short ipo = R<short>(current_bezt + bezt_data_strc->fields()["ipo"]->offset());
+				interp.push_back((interpolation_mode)ipo);
+			}
+
+			points.push_back(pt);
+			prev_vec.push_back(prev);
+			next_vec.push_back(next);
+		}
+
+		anim->points().push_back(points);
+		anim->prev_handles().push_back(prev_vec);
+		anim->next_handles().push_back(next_vec);
+		anim->interpolation_mode().push_back(interp);
+
+		curve_ptr = RPtr(curve_data + fcurve_data_strc->fields()["*next"]->offset());
+	}
+
+	return anim;
 }
 
 std::string importer::key_from_vertex(bli_vector3 _position, bli_vector3 _normal, bli_vector2 _uv)
@@ -1230,6 +1364,29 @@ bool importer::check_structure(const std::string& _path)
 	result &= check_structure("Object", "*data", "void");
 	result &= check_structure("Object", "type", "short");
 	result &= check_structure("Object", "*parent", "Object");
+	result &= check_structure("Object", "*adt", "AnimData");
+
+	result &= check_structure("AnimData", "*action", "bAction");
+
+	result &= check_structure("bAction", "id", "ID");
+	result &= check_structure("bAction", "curves", "ListBase");
+
+	result &= check_structure("ListBase", "*first", "void");
+
+	result &= check_structure("FCurve", "*rna_path", "char");
+	result &= check_structure("FCurve", "array_index", "int");
+	result &= check_structure("FCurve", "*bezt", "BezTriple");
+
+	result &= check_structure("BezTriple", "vec", "float");
+
+	if (m_version_int <= 270)
+	{
+		result &= check_structure("BezTriple", "ipo", "short");
+	}
+	else
+	{
+		result &= check_structure("BezTriple", "ipo", "char");
+	}
 
 	result &= check_structure("Lamp", "type", "short");
 	result &= check_structure("Lamp", "r", "float");
@@ -1296,9 +1453,13 @@ bool importer::check_structure(const std::string& _path)
 	result &= check_structure("Link", "*next", "Link");
 
 	if (result)
-		std::cout << "        ....    ok!" << std::endl;
+		std::cout << "        ....   structure ok!" << std::endl;
 
 	return result;
+}
+int importer::version_int() const
+{
+	return m_version_int;
 }
 bool importer::check_structure(const std::string& strcName, const std::string& fieldName, const std::string& fieldType, int minVersion, int maxVersion)
 {

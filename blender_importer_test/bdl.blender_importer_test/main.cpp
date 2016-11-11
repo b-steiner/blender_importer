@@ -17,7 +17,7 @@
 **
 **************************************************************************************/
 
-#define ASSERT(eq, error) if (!(eq)) { std::cout << error << std::endl; return false; }
+#define ASSERT(eq, error) if (!(eq)) { std::cout << error << std::endl; DebugBreak(); return false; }
 #define EPS 0.0001
 
 #include <bdl.blender_importer/blender_importer.hpp>
@@ -39,7 +39,8 @@ bool check_directionallight(node* lnode);
 bool check_matrices(node* parent_node, node* child_node, node* point_node, node* spot_node, node* directional_node);
 bool check_mesh(node* mnode);
 bool check_color_material(node* mnode);
-bool check_texture_material(node* mnode);
+bool check_texture_material(node* mnode, int version);
+bool check_anim(node* anode);
 
 void main(int argc, char* argv[])
 {
@@ -54,9 +55,14 @@ void main(int argc, char* argv[])
 				blender_importer::importer importer;
 				if (importer.check_structure(std::string("..\\test_data\\") + file))
 				{
-					if (!check_assets(std::string("..\\test_data\\") + file));
+					bool result = check_assets(std::string("..\\test_data\\") + file);
+					if (!result)
 						break;
+					else
+						std::cout << " ... Data OK!" << std::endl;
 				}
+				else
+					break;
 			}
 			catch (blender_importer::bli_exception& excpt)
 			{
@@ -129,6 +135,14 @@ node* node_by_name(const std::string& name, std::vector<node*> nodes)
 
 	return nullptr;
 }
+int idx_from_mapping_target(animation_target target, animation* anim)
+{
+	for (int i = 0; i < anim->target().size(); i++)
+		if (anim->target()[i] == target)
+			return i;
+
+	return -1;
+}
 
 bool eq(bli_vector4 vec1, bli_vector4 vec2)
 {
@@ -167,6 +181,7 @@ bool check_assets(const std::string& path)
 
 	blender_importer::importer importer;
 	auto asset = importer.load(path);
+	auto version = importer.version_int();
 
 	//Nodes
 	auto node_parent_cube = node_by_name("parent_cube", asset->nodes());
@@ -192,7 +207,8 @@ bool check_assets(const std::string& path)
 	succeed &= check_mesh(node_parent_cube);
 
 	succeed &= check_color_material(node_parent_cube);
-	succeed &= check_texture_material(node_child_cube);
+	succeed &= check_texture_material(node_child_cube, version);
+	succeed &= check_anim(node_parent_cube);
 
 	delete asset;
 	return succeed;
@@ -224,8 +240,10 @@ bool check_spotlight(node* lnode)
 	ASSERT(l->has_clipped_sphere() == false, "Spotlight distance is wrong");
 	ASSERT(eq(l->intensity() , 1.0f), "Spotlight intensity is wrong");
 	ASSERT(l->name() == "Spot", "Spotlight name is wrong");
-	ASSERT(eq(l->angle() , 20.0f), "Spotlight angle is wrong");
+	ASSERT(eq(l->angle() , 20.0f / 180.0f * M_PI), "Spotlight angle is wrong");
 	ASSERT(eq(l->angular_attenuation() , 0.15), "Spotlight angular_attenuation is wrong");
+
+	return true;
 }
 bool check_directionallight(node* lnode)
 {
@@ -236,6 +254,8 @@ bool check_directionallight(node* lnode)
 	ASSERT(eq(l->color(), bli_vector3(1.0f, 0.2f, 1.0f)), "Directional light color is wrong");
 	ASSERT(eq(l->intensity() , 0.8f), "Directional light intensity is wrong");
 	ASSERT(l->name() == "Sun", "Directional light name is wrong");
+
+	return true;
 }
 bool check_matrices(node* parent_node, node* child_node, node* point_node, node* spot_node, node* directional_node)
 {
@@ -265,7 +285,57 @@ bool check_mesh(node* mnode)
 {
 	ASSERT(mnode->mesh() != nullptr, "Mesh not present in node");
 
-	ASSERT(mnode->mesh()->positions().size() == 8, "Mesh contains wrong number of positions");
+	ASSERT(mnode->mesh()->indices().size() == 6 * 2 * 3, "Mesh contains wrong number of positions");
+	return true;
+}
+bool check_anim(node* anode)
+{
+	ASSERT(anode->animation() != nullptr, "Node does not contain an animation");
+
+	auto anim = anode->animation();
+	ASSERT(anim->interpolation_mode().size() == 9, "Animation contains wrong number of interpolation data");
+	ASSERT(anim->points().size() == 9, "Animation contains wrong number of interpolation data");
+	ASSERT(anim->prev_handles().size() == 9, "Animation contains wrong number of interpolation data");
+	ASSERT(anim->next_handles().size() == 9, "Animation contains wrong number of interpolation data");
+
+	auto locx_idx = idx_from_mapping_target(animation_target::locX, anim);
+	auto locy_idx = idx_from_mapping_target(animation_target::locY, anim);
+	auto locz_idx = idx_from_mapping_target(animation_target::locZ, anim);
+	auto rotx_idx = idx_from_mapping_target(animation_target::rotX, anim);
+	auto roty_idx = idx_from_mapping_target(animation_target::rotY, anim);
+	auto rotz_idx = idx_from_mapping_target(animation_target::rotZ, anim);
+	auto sizex_idx = idx_from_mapping_target(animation_target::sizeX, anim);
+	auto sizey_idx = idx_from_mapping_target(animation_target::sizeY, anim);
+	auto sizez_idx = idx_from_mapping_target(animation_target::sizeZ, anim);
+
+	ASSERT(locx_idx != -1, "Curve for mapping target not found");
+	ASSERT(locy_idx != -1, "Curve for mapping target not found");
+	ASSERT(locz_idx != -1, "Curve for mapping target not found");
+	ASSERT(rotx_idx != -1, "Curve for mapping target not found");
+	ASSERT(roty_idx != -1, "Curve for mapping target not found");
+	ASSERT(rotz_idx != -1, "Curve for mapping target not found");
+	ASSERT(sizex_idx != -1, "Curve for mapping target not found");
+	ASSERT(sizey_idx != -1, "Curve for mapping target not found");
+	ASSERT(sizez_idx != -1, "Curve for mapping target not found");
+
+	ASSERT(eq(anim->points()[locx_idx][0], bli_vector2(1, 0)),	"Point in animation is wrong");
+	ASSERT(eq(anim->points()[locx_idx][1], bli_vector2(30, 2)), "Point in animation is wrong");
+	ASSERT(eq(anim->points()[locx_idx][2], bli_vector2(60, 2)), "Point in animation is wrong");
+	ASSERT(eq(anim->points()[locx_idx][3], bli_vector2(90, 2)), "Point in animation is wrong");
+	ASSERT(eq(anim->prev_handles()[locx_idx][0], bli_vector2(-10.2951, 0)), "Prev in animation is wrong");
+	ASSERT(eq(anim->prev_handles()[locx_idx][1], bli_vector2(24.0345, -0.0008)),	"Prev in animation is wrong");
+	ASSERT(eq(anim->prev_handles()[locx_idx][3], bli_vector2(78.2877, 2)),	"Prev in animation is wrong");
+	ASSERT(eq(anim->next_handles()[locx_idx][0], bli_vector2(12.2951, 0)),"Next in animation is wrong");
+	ASSERT(eq(anim->next_handles()[locx_idx][2], bli_vector2(71.7123, 2)), "Next in animation is wrong");
+	ASSERT(eq(anim->next_handles()[locx_idx][3], bli_vector2(101.712341, 2)), "Next in animation is wrong");
+	ASSERT(anim->interpolation_mode()[locx_idx][0] == interpolation_mode::bezier, "Interpolation mode is wrong");
+	ASSERT(anim->interpolation_mode()[locx_idx][1] == interpolation_mode::linear, "Interpolation mode is wrong");
+	ASSERT(anim->interpolation_mode()[locx_idx][2] == interpolation_mode::bezier, "Interpolation mode is wrong");
+	ASSERT(anim->interpolation_mode()[locx_idx][3] == interpolation_mode::bezier, "Interpolation mode is wrong");
+
+	ASSERT(anim->interpolation_mode()[sizex_idx][2] == interpolation_mode::constant, "Interpolation mode is wrong");
+
+	return true;
 }
 
 bool check_color_material(node* mnode)
@@ -286,8 +356,10 @@ bool check_color_material(node* mnode)
 	ASSERT(eq(m->specular_color(), bli_vector3(0, 1.0f, 0.5f)), "Material: specular_color is wrong");
 	ASSERT(eq(m->specular_intensity(), 0.5f), "Material: specular_intensity is wrong");
 	ASSERT(m->textures().size() == 0, "Material: textures is wrong");
+
+	return true;
 }
-bool check_texture_material(node* mnode)
+bool check_texture_material(node* mnode, int version)
 {
 	ASSERT(mnode->material() != nullptr, "Texture Material not found");
 
@@ -307,10 +379,21 @@ bool check_texture_material(node* mnode)
 
 	ASSERT(m->textures().size() == 2, "Texture Material: textures is wrong");
 	auto dt = m->textures()[mapping_target::diffuse];
-	ASSERT(dt->color_space() == color_space::SRGB, "Diffuse texture colorspace is wrong");
 	ASSERT(dt->path() == "/texture.png", "Diffuse texture path is wrong");
 
 	auto nt = m->textures()[mapping_target::normals];
-	ASSERT(nt->color_space() == color_space::SRGB, "Normal texture colorspace is wrong");
-	ASSERT(nt->path() == "/OriginalFiles/normals.png", "Normal texture path is wrong");
+	
+	if (version < 264)
+	{
+		ASSERT(dt->color_space() == color_space::SRGB, "Diffuse texture colorspace is wrong");
+		ASSERT(nt->color_space() == color_space::SRGB, "Normal texture colorspace is wrong");
+	}
+	else
+	{
+		ASSERT(dt->color_space() == color_space::other, "Diffuse texture colorspace is wrong");
+		ASSERT(nt->color_space() == color_space::other, "Normal texture colorspace is wrong");
+	}
+	ASSERT(nt->path() == "/normals.png", "Normal texture path is wrong");
+
+	return true;
 }

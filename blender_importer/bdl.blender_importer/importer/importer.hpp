@@ -36,6 +36,8 @@ BEGIN_BDL_BLI
 		void to_xml(const std::string& input_path, const std::string& output_path);
 		bool check_structure(const std::string& path);
 
+		int version_int() const;
+
 	private:
 		void load_file(const std::string& path);
 		void parse_sdna_block(char* ptr);
@@ -50,6 +52,7 @@ BEGIN_BDL_BLI
 		mesh* parse_mesh(uint64_t ptr);
 		material* parse_material(uint64_t ptr);
 		light_source* parse_light_source(uint64_t ptr);
+		animation* parse_animation(uint64_t ptr);
 
 		std::string key_from_vertex(bli_vector3 position, bli_vector3 normal, bli_vector2 uv);
 		void calculate_tangents(mesh* mesh);

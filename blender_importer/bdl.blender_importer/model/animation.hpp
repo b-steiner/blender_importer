@@ -27,10 +27,10 @@ BEGIN_BDL_BLI
 
 	enum class interpolation_mode
 	{
-		linear, bezier
+		constant = 0, linear = 1, bezier = 2
 	};
 
-	enum class interpolation_target
+	enum class animation_target
 	{
 		locX, locY, locZ,
 		rotX, rotY, rotZ,
@@ -43,8 +43,8 @@ BEGIN_BDL_BLI
 		PROPERTY1(std::vector<std::vector<bli_vector2>>, points, GET_REF);
 		PROPERTY1(std::vector<std::vector<bli_vector2>>, prev_handles, GET_REF);
 		PROPERTY1(std::vector<std::vector<bli_vector2>>, next_handles, GET_REF);
-		PROPERTY1(std::vector<interpolation_mode>, interpolation_mode, GET_REF);
-		PROPERTY1(std::vector<interpolation_target>, target, GET_REF);
+		PROPERTY1(std::vector<std::vector<interpolation_mode>>, interpolation_mode, GET_REF);
+		PROPERTY1(std::vector<animation_target>, target, GET_REF);
 
 	public:
 		animation(const std::string& name);
