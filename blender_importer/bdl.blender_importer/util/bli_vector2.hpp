@@ -24,16 +24,38 @@
 
 BEGIN_BDL_BLI
 
+/*! \brief Stores a 2 element vector
+*
+* \author bdl
+*/
 class BLI_EXPORT bli_vector2
 {
+	//! Stores the x coordinate
 	PROPERTY2(float, x, GET, SET);
+	//! Stores the y coordinate
 	PROPERTY2(float, y, GET, SET);
 
 public:
+	/*! \brief Initializes a new instance of the bli_vector2 class
+	 */
 	bli_vector2();
+	/*! \brief Initializes a new instance of the bli_vector2 class
+	 *
+	 * \param x The x value
+	 * \param y The y value
+	 */
 	bli_vector2(float x, float y);
+	/*! \brief Initializes a new instance of the bli_vector2 class
+	*
+	* \param vector Another vector to copy the data from
+	*/
 	bli_vector2(const bli_vector2& vector);
 
+	/*! \brief Copy assignment operator
+	*
+	* \param vector Another vector to copy the data from
+	* \returns A reference to the current object
+	*/
 	bli_vector2& operator = (const bli_vector2& vector);
 };
 

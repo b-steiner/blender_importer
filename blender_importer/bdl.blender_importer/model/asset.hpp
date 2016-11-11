@@ -27,15 +27,27 @@ BEGIN_BDL_BLI
 
 	class importer;
 
+	/*! \brief Stores the data for a asset
+	 *
+	 * \author bdl
+	 */
 	class BLI_EXPORT asset
 	{
 		friend importer;
 
+		//! Stores the path of the source file of the asset
 		PROPERTY1(std::string, path, GET_CONST_REF);
+		//! Stores the top level nodes
 		PROPERTY1(std::vector<node*>, nodes, GET_REF);
 
 	public:
+		/*! \brief Initializes a new instance of the asset class
+		*
+		* \param path The path to the source file
+		*/
 		asset(const std::string& path);
+		/*! \brief Releases all data associated with an instance of the asset
+		*/
 		~asset();
 
 	private:

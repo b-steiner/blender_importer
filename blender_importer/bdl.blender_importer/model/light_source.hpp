@@ -25,6 +25,7 @@
 
 BEGIN_BDL_BLI
 
+	//! Enumeration for the type of a light source
 	enum class light_source_type
 	{
 		pointlight,
@@ -32,23 +33,42 @@ BEGIN_BDL_BLI
 		directionallight
 	};
 
+	/*! \brief Stores data for a light_source
+	*
+	* \author bdl
+	*/
 	class BLI_EXPORT light_source
 	{
+		//! Stores the intensity
 		PROPERTY2(float, intensity, GET, SET);
+		//! Stores the opening angle for spot lights
 		PROPERTY2(float, angle, GET, SET);
+		//! Stores the angular attenuation in [0, 1] range for spot lights
 		PROPERTY2(float, angular_attenuation, GET, SET);
+		//! Stores the maximum influence distance
 		PROPERTY2(float, distance, GET, SET);
+		//! Stores the name of the light source
 		PROPERTY1(std::string, name, GET_CONST_REF);
 
+		//! Stores whether the lightsource is clipped after a fixed distance
 		PROPERTY2(bool, has_clipped_sphere, GET, SET);
 
+		//! Stores the light's color
 		PROPERTY2(bli_vector3, color, GET_CONST_REF, SET);
+		//! Stores the attenuation. x = constant, y = linear, z = quadratic
 		PROPERTY2(bli_vector3, attenuation, GET_CONST_REF, SET);
 
+		//! Stores the type of the light source
 		PROPERTY2(light_source_type, type, GET, SET);
 
 	public:
+		/*! \brief Initializes a new instance of the light_source class
+		 *
+		 * \param name The name of the light source
+		 */
 		light_source(const std::string& name);
+		/*! \brief Releases all data associated with an instance of the light_source
+		 */
 		~light_source();
 	};
 

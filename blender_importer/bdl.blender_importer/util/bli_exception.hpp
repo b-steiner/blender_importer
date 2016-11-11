@@ -24,11 +24,20 @@
 
 BEGIN_BDL_BLI
 
+	/*! \brief An exception thrown by the importer
+	 *
+	 * \author bdl
+	 */
 	class BLI_EXPORT bli_exception
 	{
+		//! Stores the error message
 		PROPERTY1(std::string, message, GET_CONST_REF);
 
 	public:
+		/*! \brief Initializes a new instance of the bli_exception class
+		 *
+		 * \param message The error message
+		 */
 		bli_exception(const std::string& message);
 	};
 

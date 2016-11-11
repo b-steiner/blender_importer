@@ -24,18 +24,46 @@
 
 BEGIN_BDL_BLI
 
+/*! \brief Stores a 3 element vector
+*
+* \author bdl
+*/
 class BLI_EXPORT bli_vector3
 {
+	//! Stores the x coordinate
 	PROPERTY2(float, x, GET, SET);
+	//! Stores the y coordinate
 	PROPERTY2(float, y, GET, SET);
+	//! Stores the z coordinate
 	PROPERTY2(float, z, GET, SET);
 
 public:
+	/*! \brief Initializes a new instance of the bli_vector3 class
+	*/
 	bli_vector3();
+	/*! \brief Initializes a new instance of the bli_vector3 class
+	*
+	* \param values A array containing 3 floats to initialize x, y and z
+	*/
 	bli_vector3(float* values);
+	/*! \brief Initializes a new instance of the bli_vector3 class
+	*
+	* \param x The x value
+	* \param y The y value
+	* \param z The z value
+	*/
 	bli_vector3(float x, float y, float z);
+	/*! \brief Initializes a new instance of the bli_vector3 class
+	*
+	* \param vector Another vector to copy the data from
+	*/
 	bli_vector3(const bli_vector3& vector);
 
+	/*! \brief Copy assignment operator
+	*
+	* \param vector Another vector to copy the data from
+	* \returns A reference to the current object
+	*/
 	bli_vector3& operator = (const bli_vector3& vector);
 };
 

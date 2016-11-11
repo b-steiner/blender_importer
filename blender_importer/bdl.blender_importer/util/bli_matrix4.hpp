@@ -24,18 +24,45 @@
 
 BEGIN_BDL_BLI
 
+/*! \brief Stores a 4x4 matrix
+ *
+ * \author bdl
+ */
 class BLI_EXPORT bli_matrix4
 {
 	float m_m[16];
 
 public:
+	/*! \brief Initializes a new instance of the bli_matrix4 class
+	*/
 	bli_matrix4();
+	/*! \brief Initializes a new instance of the bli_matrix4 class
+	*
+	* \param m A array containing 16 float values to initialize the matrix
+	*/
 	bli_matrix4(float m[16]);
-	bli_matrix4(const bli_matrix4& vector);
+	/*! \brief Initializes a new instance of the bli_matrix4 class
+	*
+	* \param matrix Another matrix to copy the data from
+	*/
+	bli_matrix4(const bli_matrix4& matrix);
 
-	bli_matrix4& operator = (const bli_matrix4& vector);
+	/*! \brief Copy assignment operator
+	 *
+	 * \param matrix Another matrix to copy the data from
+	 * \returns A reference to the current object
+	 */
+	bli_matrix4& operator = (const bli_matrix4& matrix);
 
+	/*! \brief Returns a pointer to the data array
+	 *
+	 * \returns A pointer to the data array
+	 */
 	float* m();
+	/*! \brief Returns a pointer to the data array
+	*
+	* \returns A pointer to the data array
+	*/
 	const float* m() const;
 };
 
