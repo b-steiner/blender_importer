@@ -25,23 +25,45 @@
 
 BEGIN_BDL_BLI
 
+	//! Enumeration with different targets for textures
 	enum class mapping_target
 	{
-		diffuse, normals, other
+		//! The texture contains diffuse colors
+		diffuse,
+		//! The texture contains normals
+		normals, 
+		//! The texture contains unknown data
+		other
 	};
 
+	//! Enumeration with different color spaces
 	enum class color_space
 	{
-		linear, SRGB, other
+		//! Colors are linearly stored
+		linear,
+		//! Colors are in sRGB space
+		SRGB,
+		//! The colorspace is unknown
+		other
 	};
 
+	/*! \brief Stores information about a texture
+	 *
+	 * \author bdl
+	 */
 	class BLI_EXPORT texture
 	{
+		//! Stores the file path (relative to the .blend file)
 		PROPERTY2(std::string, path, GET_CONST_REF, SET);
+		//! Stores the colorspace in which the texture is stored
 		PROPERTY2(blender_importer::color_space, color_space, GET_CONST_REF, SET);
 
 	public:
+		/*! \brief Initializes a new instance of the texture class
+		 */
 		texture();
+		/*! \brief Releases all data associated with an instance of the texture
+		 */
 		~texture();		
 	};
 

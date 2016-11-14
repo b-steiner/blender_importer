@@ -26,16 +26,43 @@
 
 BEGIN_BDL_BLI
 
+	/*! \brief Contains methods for loading a blender file
+	 *
+	 * \author bdl
+	 */
 	class BLI_EXPORT importer
 	{
 	public:
+		/*! \brief Initializes a new instance of the importer class
+		 */
 		importer();
+		/*! \brief Releases all data associated with an instance of the importer class
+		 */
 		~importer();
 
+		/*! \brief Loads a blender file and parses it into an asset
+		 *
+		 * \param path The path to the blender file
+		 * \returns A pointer to the parsed asset. Has to be deleted by the user.
+		 */
 		asset* load(const std::string& path);
+		/*! \brief Loads a blender file and stores it in a human readable xml file
+		 *
+		 * \param input_path Path of the blender file
+		 * \param output_path Path of the target xml file
+		 */
 		void to_xml(const std::string& input_path, const std::string& output_path);
+		/*! \brief Checks whether the structure of a blender file contains all fields expected by the importer
+		 *
+		 * \param path Path to the blender file
+		 * \returns True when all necessary fields exist, False otherwise
+		 */
 		bool check_structure(const std::string& path);
 
+		/*! \brief Returns the version the blender file had. Only valid after a call to the load function
+		 *
+		 * \returns The version in the format (major_version * 100 + minor_version), e.g., 2.46 returns 246
+		 */
 		int version_int() const;
 
 	private:

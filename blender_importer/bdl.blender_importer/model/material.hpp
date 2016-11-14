@@ -26,40 +26,77 @@
 
 BEGIN_BDL_BLI
 
+	//! Enumeration containing different special shading modes
 	enum class material_mode
 	{
-		none,
-		transparent,
-		shadeless
+		//! No special properties
+		none = 0,
+		//! Material is transparent
+		transparent = 1,
+		//! Material is shadeless
+		shadeless = 2
 	};
 
+	/*! \brief Contains material properties
+	 *
+	 * \author bdl
+	 */
 	class BLI_EXPORT material
 	{
+		//! Stores the name of the material
 		PROPERTY1(std::string, name, GET_CONST_REF);
+		//! Stores the diffuse rgb color
 		PROPERTY2(bli_vector3, diffuse_color, GET, SET);
+		//! Stores the specular rgb color
 		PROPERTY2(bli_vector3, specular_color, GET, SET);
+		//! Stores the intensity of diffuse reflections
 		PROPERTY2(float, diffuse_intensity, GET, SET);
+		//! Stores the specular intensity
 		PROPERTY2(float, specular_intensity, GET, SET);
+		//! Stores the intensity of ambient illumination
 		PROPERTY2(float, ambient_intensity, GET, SET);
+		//! Stores how much light the material emits by itself
 		PROPERTY2(float, emitting_intensity, GET, SET);
+		//! Stores the specular exponent
 		PROPERTY2(short, hardness, GET, SET);
+		//! Stores the opacity of the material
 		PROPERTY2(float, opacity, GET, SET);
+		//! Stores a binary combination of special material flags
 		PROPERTY2(material_mode, mode, GET, SET);
 
 		typedef std::unordered_map<mapping_target, texture*> mapping_texture_map;
+		//! Stores the textures used in this material
 		PROPERTY1(mapping_texture_map, textures, GET_REF);
 
 	public:
+		/*! \brief Initializes a new instance of the material class
+		 *
+		 * \param name The name of the material
+		 */
 		material(const std::string& name);
+		/*! \brief Releases all data associated with an instance of the material class
+		 */
 		~material();
 	};
 
 END_BDL_BLI
 
+/* \brief Binary or combination of multiple material mode flags
+ *
+ * \param a First mode
+ * \param b Second mode
+ * \returns The binary or of a and b
+ */
 inline bdl::blender_importer::material_mode operator| (bdl::blender_importer::material_mode a, bdl::blender_importer::material_mode b)
 {
 	return (bdl::blender_importer::material_mode)((int)a | (int)b);
 }
+/* \brief Binary and combination of multiple material mode flags
+*
+* \param a First mode
+* \param b Second mode
+* \returns The binary and of a and b
+*/
 inline bdl::blender_importer::material_mode operator& (bdl::blender_importer::material_mode a, bdl::blender_importer::material_mode b)
 {
 	return (bdl::blender_importer::material_mode)((int)a & (int)b);

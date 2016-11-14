@@ -6,3 +6,5 @@ temp
 *.opensdf
 bin
 ipch
+blender_importer
+/doc/doxygen_error.log

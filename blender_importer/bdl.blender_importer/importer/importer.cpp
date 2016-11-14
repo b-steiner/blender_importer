@@ -26,8 +26,7 @@
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
-//This has to contain the correct gamma value for the system. For windows this is 1/2.2 = 0.45454545
-//#define ONE_OVER_GAMMA 0.4545454545f
+//This has to contain the correct gamma value for the system.
 #define ONE_OVER_GAMMA 1
 
 using namespace bdl::blender_importer;
