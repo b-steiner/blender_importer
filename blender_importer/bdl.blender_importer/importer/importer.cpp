@@ -572,6 +572,9 @@ node* importer::parse_node(char* ptr)
 	glm::vec3 rot = glm::make_vec3((float*)(m_data + strc->fields()["rot"]->offset()));
 	glm::vec3 size = glm::make_vec3((float*)(m_data + strc->fields()["size"]->offset()));
 
+	if (name == "helper")
+		int asdf = 00;
+
 	//Correct parent-child hirarchical transformations
 	//Blender stores transformations relative to the parent, but with an additional "offset" stored in the parentinv matrix.
 	//So we have to get the parameters of this matrix and correct our transformations.
@@ -596,9 +599,9 @@ node* importer::parse_node(char* ptr)
 	glm::vec3 t = glm::vec3(rsMatrix * glm::vec4(loc, 0)) + ptranslation;
 	result_node->translation(bli_vector3(t.x, t.y, t.z));
 
-	glm::mat4 crmat = glm::rotate(glm::mat4(1.0f), rot.z, glm::vec3(0, 0, 1)) *
+	glm::mat4 crmat = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(1, 0, 0)) *
 		glm::rotate(glm::mat4(1.0f), rot.y, glm::vec3(0, 1, 0)) *
-		glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(1, 0, 0));
+		glm::rotate(glm::mat4(1.0f), rot.z, glm::vec3(0, 0, 1));
 		//* AIOMatrix3::RotateY(rot.y) * AIOMatrix3::RotateX(rot.x);
 	crmat = rMatrix * crmat;
 
