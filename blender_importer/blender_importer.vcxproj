@@ -58,7 +58,7 @@
       <Optimization>Disabled</Optimization>
       <PreprocessorDefinitions>WIN32;BLI_BUILD;_DEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\glm-0.9.8.1\glm\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\external\glm-0.9.8.1\glm\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>bdl.blender_importer/blender_importer.hpp</PrecompiledHeaderFile>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <MinimalRebuild>false</MinimalRebuild>
@@ -77,7 +77,7 @@
       <IntrinsicFunctions>true</IntrinsicFunctions>
       <PreprocessorDefinitions>WIN32;BLI_BUILD;NDEBUG;_WINDOWS;_USRDLL;_CRT_SECURE_NO_WARNINGS;_ITERATOR_DEBUG_LEVEL=0;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
-      <AdditionalIncludeDirectories>$(ProjectDir);$(SolutionDir)external\glm-0.9.8.1\glm\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\external\glm-0.9.8.1\glm\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>bdl.blender_importer/blender_importer.hpp</PrecompiledHeaderFile>
     </ClCompile>
     <Link>
