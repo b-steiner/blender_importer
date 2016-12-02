@@ -596,36 +596,35 @@ node* importer::parse_node(char* ptr)
 	glm::vec3 t = glm::vec3(rsMatrix * glm::vec4(loc, 0)) + ptranslation;
 	result_node->translation(bli_vector3(t.x, t.y, t.z));
 
-	glm::mat4 crmat = glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(1, 0, 0)) *
+	glm::mat4 crmat = glm::rotate(glm::mat4(1.0f), rot.z, glm::vec3(0, 0, 1)) *
 		glm::rotate(glm::mat4(1.0f), rot.y, glm::vec3(0, 1, 0)) *
-		glm::rotate(glm::mat4(1.0f), rot.z, glm::vec3(0, 0, 1));
-		//* AIOMatrix3::RotateY(rot.y) * AIOMatrix3::RotateX(rot.x);
+		glm::rotate(glm::mat4(1.0f), rot.x, glm::vec3(1, 0, 0));
 	crmat = rMatrix * crmat;
 
 	float theta = 0.0f;
 	float psi = 0.0f;
 	float phi = 0.0f;
 
-	if (abs(crmat[2][0]) > 0.999)
+	if (abs(crmat[0][2]) > 0.999)
 	{
 		phi = 0.0f;
 
-		if (crmat[2][0] < 0.0f)
+		if (crmat[0][2] < 0.0f)
 		{
 			theta = (float)M_PI / 2.0f;
-			psi = atan2f(crmat[0][1], crmat[0][2]);
+			psi = atan2f(crmat[1][0], crmat[2][0]);
 		}
 		else
 		{
 			theta = -(float)M_PI / 2.0f;
-			psi = atan2f(-crmat[0][1], -crmat[0][2]);
+			psi = atan2f(-crmat[1][0], -crmat[2][0]);
 		}
 	}
 	else
 	{
-		theta = -asinf(crmat[2][0]);
-		psi = atan2f(crmat[2][1], crmat[2][2]);
-		phi = atan2f(crmat[1][0] / cosf(theta), crmat[0][0] / cosf(theta));
+		theta = -asinf(crmat[0][2]);
+		psi = atan2f(crmat[1][2], crmat[2][2]);
+		phi = atan2f(crmat[0][1] / cosf(theta), crmat[0][0] / cosf(theta));
 	}
 
 	result_node->rotation(bli_vector3(psi, theta, phi));
