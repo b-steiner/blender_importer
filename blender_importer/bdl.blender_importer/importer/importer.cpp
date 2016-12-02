@@ -572,9 +572,6 @@ node* importer::parse_node(char* ptr)
 	glm::vec3 rot = glm::make_vec3((float*)(m_data + strc->fields()["rot"]->offset()));
 	glm::vec3 size = glm::make_vec3((float*)(m_data + strc->fields()["size"]->offset()));
 
-	if (name == "helper")
-		int asdf = 00;
-
 	//Correct parent-child hirarchical transformations
 	//Blender stores transformations relative to the parent, but with an additional "offset" stored in the parentinv matrix.
 	//So we have to get the parameters of this matrix and correct our transformations.
@@ -672,6 +669,9 @@ mesh* importer::parse_mesh(uint64_t pptr)
 	char* ptr = m_address_to_fileblock[pptr];
 	sdna_struct* strc = m_sdna[R<uint32_t>(ptr + 8 + m_ptr_size)];
 	sdna_struct* idstrc = m_sdna[m_name_to_sdna_idx["ID"]];
+	auto custom_data_strc = m_sdna[m_name_to_sdna_idx["CustomData"]];
+	auto custom_data_layer_strc = m_sdna[m_name_to_sdna_idx["CustomDataLayer"]];
+	uint64_t custom_data_layer_size = m_sdna_type_sizes[custom_data_strc->fields()["*layers"]->type_idx()];
 
 	ptr += 16 + m_ptr_size;
 
@@ -696,7 +696,6 @@ mesh* importer::parse_mesh(uint64_t pptr)
 
 	int triangles = 0;
 	int faceCount = 0;
-	bool hasUvs = false;
 
 	//Load m_data from block
 	uint32_t vertexCount = R<uint32_t>(ptr + strc->fields()["totvert"]->offset());
@@ -729,12 +728,11 @@ mesh* importer::parse_mesh(uint64_t pptr)
 		if (mtfaceAddr != 0)
 		{
 			mtfacePtr = m_address_to_fileblock[mtfaceAddr] + 16 + m_ptr_size;
-			hasUvs = true;
 		}
 
 		indices.reserve(faceCount * 4);
 		faceNormals = new bli_vector3[faceCount];
-		if (hasUvs)
+		if (mtfacePtr != nullptr)
 		{
 			std::vector<bli_vector2> inituv;
 			inituv.reserve(faceCount * 4);
@@ -779,7 +777,7 @@ mesh* importer::parse_mesh(uint64_t pptr)
 			}
 
 
-			if (hasUvs) // Load uv if necessary
+			if (mtfacePtr != nullptr) // Load uv if necessary
 			{
 				float* uvPtr = (float*)(mtfacePtr + i * mtfaceSize + mtfaceStrc->fields()["uv"]->offset());
 
@@ -811,13 +809,34 @@ mesh* importer::parse_mesh(uint64_t pptr)
 		char* mpolyPtr = m_address_to_fileblock[RPtr(ptr + strc->fields()["*mpoly"]->offset())] + 16 + m_ptr_size;
 		char* mloopPtr = m_address_to_fileblock[RPtr(ptr + strc->fields()["*mloop"]->offset())] + 16 + m_ptr_size;
 
-		uint64_t mloopuvAddr = RPtr(ptr + strc->fields()["*mloopuv"]->offset());
-		char* mloopuvPtr = nullptr;
-		if (mloopuvAddr != 0)
+		//UV Layers
+		std::vector<char*> uv_layer_ptr; //= RPtr(ptr + strc->fields()["*mloopuv"]->offset());
+		auto custom_data_layer_addr = RPtr(ptr + strc->fields()["ldata"]->offset() + custom_data_strc->fields()["*layers"]->offset());
+		//char* mloopuvPtr = nullptr;
+		if (custom_data_layer_addr != 0)
 		{
-			mloopuvPtr = m_address_to_fileblock[mloopuvAddr] + 16 + m_ptr_size;
-			hasUvs = true;
+			char* custom_data_layer_ptr = m_address_to_fileblock[custom_data_layer_addr];
+			//Check number of uv layers
+			uint32_t layer_count = *((uint32_t*)(custom_data_layer_ptr + 12 + m_ptr_size));
+			custom_data_layer_ptr += 16 + m_ptr_size;
+
+			for (int i = 0; i < layer_count; i++)
+			{
+				int32_t type = R<int32_t>(custom_data_layer_ptr + custom_data_layer_strc->fields()["type"]->offset());
+				if (type == 16) //UV
+				{
+					auto uv_layer_addr = RPtr(custom_data_layer_ptr + custom_data_layer_strc->fields()["*data"]->offset());
+					uv_layer_ptr.push_back(m_address_to_fileblock[uv_layer_addr] + 16 + m_ptr_size);
+					result_mesh->tex_coord_names().push_back(std::string(custom_data_layer_ptr + custom_data_layer_strc->fields()["name"]->offset()));
+				}
+
+				custom_data_layer_ptr += custom_data_layer_size;
+			}
+
+			//mloopuvPtr = m_address_to_fileblock[mloopuvAddr] + 16 + m_ptr_size;
+			//hasUvs = true;
 		}
+
 		uint64_t mpolySize = m_sdna_type_sizes[strc->fields()["*mpoly"]->type_idx()];
 		uint64_t mloopSize = m_sdna_type_sizes[strc->fields()["*mloop"]->type_idx()];
 		uint64_t mloopuvSize = m_sdna_type_sizes[strc->fields()["*mloopuv"]->type_idx()];
@@ -827,7 +846,9 @@ mesh* importer::parse_mesh(uint64_t pptr)
 		faceFlags = new char[faceCount];
 		faceStart = new unsigned int[faceCount];
 		faceLength = new unsigned int[faceCount];
-		if (hasUvs)
+
+		faceUvs.reserve(uv_layer_ptr.size());
+		for (int i = 0; i < uv_layer_ptr.size(); i++)
 		{
 			std::vector<bli_vector2> inituv;
 			faceUvs.push_back(inituv);
@@ -848,7 +869,7 @@ mesh* importer::parse_mesh(uint64_t pptr)
 			int loopLength = R<uint32_t>(mpolyFaceStart + mpolyStrc->fields()["totloop"]->offset());
 
 			char* mloopFaceStart = mloopPtr + mloopSize * loopStart;
-			char* mloopuvFaceStart = mloopuvPtr + mloopuvSize * loopStart;
+			//char* mloopuvFaceStart = mloopuvPtr + mloopuvSize * loopStart;
 
 			triangles += (loopLength - 2);
 
@@ -860,14 +881,15 @@ mesh* importer::parse_mesh(uint64_t pptr)
 			{
 				indices.push_back(R<uint32_t>(mloopFaceStart + mloopStrc->fields()["v"]->offset()));
 
-				if (hasUvs)
+				for (int uvi = 0; uvi < uv_layer_ptr.size(); uvi++)
 				{
-					float* uv = (float*)(mloopuvFaceStart + mloopuvStrc->fields()["uv"]->offset());
-					faceUvs[0].push_back(bli_vector2(uv[0], 1.0f - uv[1])); //Blender has the texture origin on top left, OpenGL uses bottom left
+					float* uv = (float*)(uv_layer_ptr[uvi] + i * mloopuvSize + mloopuvStrc->fields()["uv"]->offset());
+					//float* uv = (float*)(mloopuvFaceStart + mloopuvStrc->fields()["uv"]->offset());
+					faceUvs[uvi].push_back(bli_vector2(uv[0], 1.0f - uv[1])); //Blender has the texture origin on top left, OpenGL uses bottom left
 				}
 
 				mloopFaceStart += mloopSize;
-				mloopuvFaceStart += mloopuvSize;
+				//mloopuvFaceStart += mloopuvSize;
 			}
 
 			//Face normal
@@ -898,11 +920,21 @@ mesh* importer::parse_mesh(uint64_t pptr)
 	indPositions.reserve(triangles * 3);
 	std::vector<bli_vector3> indNormals;
 	indNormals.reserve(triangles * 3);
-	std::vector<bli_vector2> indUVs;
-	indUVs.reserve(triangles * 3);
 	std::vector<unsigned int> indIndices;
 	indIndices.reserve(triangles * 3);
 	std::vector<unsigned int> indexCache;
+
+	std::vector<std::vector<bli_vector2>> indUVs;
+	indUVs.reserve(faceUvs.size());
+	for (int i = 0; i < faceUvs.size(); i++)
+	{
+		std::vector<bli_vector2> init;
+		init.reserve(triangles * 3);
+		indUVs.push_back(init);
+	}
+
+	std::vector<bli_vector2> uv;
+	uv.reserve(faceUvs.size());
 
 	for (int face = 0; face < faceCount; face++)
 	{
@@ -915,10 +947,10 @@ mesh* importer::parse_mesh(uint64_t pptr)
 			bli_vector3 n = normals[indices[findex]];
 			if (faceFlags[face] % 2 == 0)
 				n = faceNormals[face];
-			bli_vector2 uv;
 
-			if (hasUvs)
-				uv = faceUvs[0][findex];
+			uv.clear();
+			for (int uvi = 0; uvi < faceUvs.size(); uvi++)
+				uv.push_back(faceUvs[uvi][findex]);
 
 			std::string key = key_from_vertex(p, n, uv);
 			auto vit = vertexDictionary.find(key);
@@ -927,7 +959,8 @@ mesh* importer::parse_mesh(uint64_t pptr)
 				vertexDictionary[key] = (unsigned int)indPositions.size();
 				indPositions.push_back(p);
 				indNormals.push_back(n);
-				indUVs.push_back(uv);
+				for (int uvi = 0; uvi < faceUvs.size(); uvi++)
+					indUVs[uvi].push_back(uv[uvi]);
 				vit = vertexDictionary.find(key);
 			}
 
@@ -981,9 +1014,9 @@ mesh* importer::parse_mesh(uint64_t pptr)
 	result_mesh->positions() = indPositions;
 	result_mesh->normals() = indNormals;
 
-	if (hasUvs)
+	for (int i = 0; i < indUVs.size(); i++)
 	{
-		result_mesh->tex_coords().push_back(indUVs);
+		result_mesh->tex_coords().push_back(indUVs[i]);
 		calculate_tangents(result_mesh);
 	}
 
@@ -1101,9 +1134,15 @@ material* importer::parse_material(uint64_t pptr)
 
 					uint16_t mapTo = R<uint16_t>(mtexPtr + mtexStrc->fields()["mapto"]->offset());
 					if ((mapTo & 0x01) != 0)
+					{
 						result_material->textures()[mapping_target::diffuse] = result_texture;
+						result_material->texture_influence()[mapping_target::diffuse] = R<float>(mtexPtr + mtexStrc->fields()["colfac"]->offset());
+					}
 					if ((mapTo & 0x02) != 0)
+					{
 						result_material->textures()[mapping_target::normals] = result_texture;
+						result_material->texture_influence()[mapping_target::normals] = R<float>(mtexPtr + mtexStrc->fields()["norfac"]->offset());
+					}
 				}
 				else
 				{
@@ -1282,11 +1321,13 @@ animation* importer::parse_animation(uint64_t ptr)
 	return anim;
 }
 
-std::string importer::key_from_vertex(bli_vector3 _position, bli_vector3 _normal, bli_vector2 _uv)
+std::string importer::key_from_vertex(bli_vector3 _position, bli_vector3 _normal, std::vector<bli_vector2>& uvs)
 {
 	std::stringstream ss;
 	ss << std::fixed << std::setprecision(4) << _position.x() << ";" << _position.y() << ";" << _position.z() << ";" << _normal.x() << ";" << _normal.y() << ";" << _normal.z()
-		<< ";" << _uv.x() << "; " << _uv.y();
+		<< ";";
+	for (auto& uv : uvs)
+		ss << uv.x() << ";" << uv.y() << ";";
 	return ss.str();
 }
 void importer::calculate_tangents(mesh* _mesh)

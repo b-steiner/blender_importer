@@ -48,6 +48,7 @@ BEGIN_BDL_BLI
 		PROPERTY1(std::vector<unsigned int>, indices, GET_REF);
 		//! Stores multiple sets of uv coordinates.
 		PROPERTY1(std::vector<std::vector<bli_vector2>>, tex_coords, GET_REF);
+		PROPERTY1(std::vector<std::string>, tex_coord_names, GET_REF);
 
 	public:
 		/*! \brief Initializes a new instance of the mesh class

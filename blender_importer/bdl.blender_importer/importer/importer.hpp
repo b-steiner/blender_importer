@@ -81,7 +81,7 @@ BEGIN_BDL_BLI
 		light_source* parse_light_source(uint64_t ptr);
 		animation* parse_animation(uint64_t ptr);
 
-		std::string key_from_vertex(bli_vector3 position, bli_vector3 normal, bli_vector2 uv);
+		std::string key_from_vertex(bli_vector3 position, bli_vector3 normal, std::vector<bli_vector2>& uv);
 		void calculate_tangents(mesh* mesh);
 
 

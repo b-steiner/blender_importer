@@ -65,8 +65,14 @@ BEGIN_BDL_BLI
 		PROPERTY2(material_mode, mode, GET, SET);
 
 		typedef std::unordered_map<mapping_target, texture*> mapping_texture_map;
+		typedef std::unordered_map<mapping_target, float> mapping_float_map;
+
 		//! Stores the textures used in this material
 		PROPERTY1(mapping_texture_map, textures, GET_REF);
+
+		PROPERTY1(mapping_float_map, texture_influence, GET_REF);
+
+		PROPERTY2(std::string, uv_name, GET_CONST_REF, SET);
 
 	public:
 		/*! \brief Initializes a new instance of the material class

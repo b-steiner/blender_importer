@@ -26,6 +26,6 @@ using namespace bdl;
 void main(int argc, char* argv[])
 {
 	blender_importer::importer importer;
-	//importer.load(argv[1]);
-	importer.to_xml(argv[1], argv[2]);
+	importer.load(argv[1]);
+	//importer.to_xml(argv[1], argv[2]);
 }
