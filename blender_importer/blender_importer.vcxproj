@@ -62,6 +62,7 @@
       <PrecompiledHeaderFile>bdl.blender_importer/blender_importer.hpp</PrecompiledHeaderFile>
       <ObjectFileName>$(IntDir)/%(RelativeDir)</ObjectFileName>
       <MinimalRebuild>false</MinimalRebuild>
+      <DisableSpecificWarnings>4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -79,6 +80,7 @@
       <MultiProcessorCompilation>true</MultiProcessorCompilation>
       <AdditionalIncludeDirectories>$(ProjectDir);$(ProjectDir)..\external\glm-0.9.8.1\glm\;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <PrecompiledHeaderFile>bdl.blender_importer/blender_importer.hpp</PrecompiledHeaderFile>
+      <DisableSpecificWarnings>4251</DisableSpecificWarnings>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>

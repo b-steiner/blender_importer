@@ -204,7 +204,7 @@ bool check_assets(const std::string& path)
 	succeed &= check_directionallight(node_directional_light);
 
 	succeed &= check_matrices(node_parent_cube, node_child_cube, node_pointlight, node_spotlight, node_directional_light);
-	succeed &= check_mesh(node_parent_cube);
+	succeed &= check_mesh(node_child_cube);
 
 	succeed &= check_color_material(node_parent_cube);
 	succeed &= check_texture_material(node_child_cube, version);
@@ -240,8 +240,8 @@ bool check_spotlight(node* lnode)
 	ASSERT(l->has_clipped_sphere() == false, "Spotlight distance is wrong");
 	ASSERT(eq(l->intensity() , 1.0f), "Spotlight intensity is wrong");
 	ASSERT(l->name() == "Spot", "Spotlight name is wrong");
-	ASSERT(eq(l->angle() , 20.0f / 180.0f * M_PI), "Spotlight angle is wrong");
-	ASSERT(eq(l->angular_attenuation() , 0.15), "Spotlight angular_attenuation is wrong");
+	ASSERT(eq(l->angle() , 20.0f / 180.0f * (float)M_PI), "Spotlight angle is wrong");
+	ASSERT(eq(l->angular_attenuation() , 0.15f), "Spotlight angular_attenuation is wrong");
 
 	return true;
 }
@@ -260,11 +260,11 @@ bool check_directionallight(node* lnode)
 bool check_matrices(node* parent_node, node* child_node, node* point_node, node* spot_node, node* directional_node)
 {
 	ASSERT(eq(parent_node->translation(), bli_vector3(0, 0, 0)), "parent_node translation is wrong");
-	ASSERT(eq(parent_node->rotation(), bli_vector3(0, 0.78539f, 0)), "parent_node rotation is wrong");
+	ASSERT(eq(parent_node->rotation(), bli_vector3(0, -0.78539f, 0)), "parent_node rotation is wrong");
 	ASSERT(eq(parent_node->scale(), bli_vector3(1, 1, 1)), "parent_node scale is wrong");
 
 	ASSERT(eq(child_node->translation(), bli_vector3(5, 0, 0)), "child_node translation is wrong");
-	ASSERT(eq(child_node->rotation(), bli_vector3(0, 0, -0.78539f)), "child_node rotation is wrong");
+	ASSERT(eq(child_node->rotation(), bli_vector3(0, 0, 0.78539f)), "child_node rotation is wrong");
 	ASSERT(eq(child_node->scale(), bli_vector3(1, 2, 1)), "child_node scale is wrong");
 
 	ASSERT(eq(point_node->translation(), bli_vector3(0, 0, 3)), "point_node translation is wrong");
@@ -272,11 +272,11 @@ bool check_matrices(node* parent_node, node* child_node, node* point_node, node*
 	ASSERT(eq(point_node->scale(), bli_vector3(1, 1, 1)), "point_node scale is wrong");
 
 	ASSERT(eq(spot_node->translation(), bli_vector3(-5, 0, -5)), "spot_node translation is wrong");
-	ASSERT(eq(spot_node->rotation(), bli_vector3(-2.35619f, 0, 0)), "spot_node rotation is wrong");
+	ASSERT(eq(spot_node->rotation(), bli_vector3(2.35619f, 0, 0)), "spot_node rotation is wrong");
 	ASSERT(eq(spot_node->scale(), bli_vector3(1, 1, 1)), "spot_node scale is wrong");
 
 	ASSERT(eq(directional_node->translation(), bli_vector3(0, 0, 10)), "directional_node translation is wrong");
-	ASSERT(eq(directional_node->rotation(), bli_vector3(0, -0.78539f, 0)), "directional_node rotation is wrong");
+	ASSERT(eq(directional_node->rotation(), bli_vector3(0, 0.78539f, 0)), "directional_node rotation is wrong");
 	ASSERT(eq(directional_node->scale(), bli_vector3(1, 1, 1)), "directional_node scale is wrong");
 
 	return true;
@@ -286,6 +286,12 @@ bool check_mesh(node* mnode)
 	ASSERT(mnode->mesh() != nullptr, "Mesh not present in node");
 
 	ASSERT(mnode->mesh()->indices().size() == 6 * 2 * 3, "Mesh contains wrong number of positions");
+	ASSERT(mnode->mesh()->tex_coords().size() == 2, "Mesh contains wrong number of uv layers");
+	ASSERT(mnode->mesh()->tex_coord_names().size() == 2, "Mesh contains wrong number of uv layers");
+	auto l = mnode->mesh()->tex_coord_names().end();
+	auto f = mnode->mesh()->tex_coord_names().begin();
+	ASSERT(std::find(f, l, "UVTex") != l, "Mesh contains wrong number of uv layers");
+	ASSERT(std::find(f, l, "other_uv") != l, "Mesh contains wrong number of uv layers");
 	return true;
 }
 bool check_anim(node* anode)
@@ -322,12 +328,12 @@ bool check_anim(node* anode)
 	ASSERT(eq(anim->points()[locx_idx][1], bli_vector2(30, 2)), "Point in animation is wrong");
 	ASSERT(eq(anim->points()[locx_idx][2], bli_vector2(60, 2)), "Point in animation is wrong");
 	ASSERT(eq(anim->points()[locx_idx][3], bli_vector2(90, 2)), "Point in animation is wrong");
-	ASSERT(eq(anim->prev_handles()[locx_idx][0], bli_vector2(-10.2951, 0)), "Prev in animation is wrong");
-	ASSERT(eq(anim->prev_handles()[locx_idx][1], bli_vector2(24.0345, -0.0008)),	"Prev in animation is wrong");
-	ASSERT(eq(anim->prev_handles()[locx_idx][3], bli_vector2(78.2877, 2)),	"Prev in animation is wrong");
-	ASSERT(eq(anim->next_handles()[locx_idx][0], bli_vector2(12.2951, 0)),"Next in animation is wrong");
-	ASSERT(eq(anim->next_handles()[locx_idx][2], bli_vector2(71.7123, 2)), "Next in animation is wrong");
-	ASSERT(eq(anim->next_handles()[locx_idx][3], bli_vector2(101.712341, 2)), "Next in animation is wrong");
+	ASSERT(eq(anim->prev_handles()[locx_idx][0], bli_vector2(-10.2951f, 0)), "Prev in animation is wrong");
+	ASSERT(eq(anim->prev_handles()[locx_idx][1], bli_vector2(24.0345f, -0.0008f)),	"Prev in animation is wrong");
+	ASSERT(eq(anim->prev_handles()[locx_idx][3], bli_vector2(78.2877f, 2)),	"Prev in animation is wrong");
+	ASSERT(eq(anim->next_handles()[locx_idx][0], bli_vector2(12.2951f, 0)),"Next in animation is wrong");
+	ASSERT(eq(anim->next_handles()[locx_idx][2], bli_vector2(71.7123f, 2)), "Next in animation is wrong");
+	ASSERT(eq(anim->next_handles()[locx_idx][3], bli_vector2(101.712341f, 2)), "Next in animation is wrong");
 	ASSERT(anim->interpolation_mode()[locx_idx][0] == interpolation_mode::bezier, "Interpolation mode is wrong");
 	ASSERT(anim->interpolation_mode()[locx_idx][1] == interpolation_mode::linear, "Interpolation mode is wrong");
 	ASSERT(anim->interpolation_mode()[locx_idx][2] == interpolation_mode::bezier, "Interpolation mode is wrong");
@@ -380,6 +386,12 @@ bool check_texture_material(node* mnode, int version)
 	ASSERT(m->textures().size() == 2, "Texture Material: textures is wrong");
 	auto dt = m->textures()[mapping_target::diffuse];
 	ASSERT(dt->path() == "/texture.png", "Diffuse texture path is wrong");
+	ASSERT(m->texture_influence().size() == 2, "Texture Material: wrong number of influence factors");
+	ASSERT(m->texture_uv_name().size() == 2, "Texture Material: wrong number of influence factors");
+	ASSERT(m->texture_influence()[mapping_target::diffuse] == 0.9f, "Texture Material: Wrong influence factor for diffuse texture");
+	ASSERT(m->texture_influence()[mapping_target::normals] == 1.0f, "Texture Material: Wrong influence factor for normal texture");
+	ASSERT(m->texture_uv_name()[mapping_target::diffuse] == "UVTex", "Texture Material: Wrong uv name for diffuse texture");
+	ASSERT(m->texture_uv_name()[mapping_target::normals] == "other_uv", "Texture Material: Wrong uv name for diffuse texture");
 
 	auto nt = m->textures()[mapping_target::normals];
 	

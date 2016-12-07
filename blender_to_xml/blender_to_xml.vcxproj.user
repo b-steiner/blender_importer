@@ -4,7 +4,7 @@
     <ShowAllFiles>true</ShowAllFiles>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
-    <LocalDebuggerCommandArguments>$(SolutionDir)\test_data\test_scene_278a_x64.blend $(OutDir)output.xml</LocalDebuggerCommandArguments>
+    <LocalDebuggerCommandArguments>$(SolutionDir)\test_data\test_scene_257_x64.blend $(OutDir)output.xml</LocalDebuggerCommandArguments>
     <DebuggerFlavor>WindowsLocalDebugger</DebuggerFlavor>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'">

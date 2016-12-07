@@ -48,6 +48,7 @@ BEGIN_BDL_BLI
 		PROPERTY1(std::vector<unsigned int>, indices, GET_REF);
 		//! Stores multiple sets of uv coordinates.
 		PROPERTY1(std::vector<std::vector<bli_vector2>>, tex_coords, GET_REF);
+		//! Stores the name for each uv layer. Each name corresponds to the uv coordinates stored at the same index in tex_coords
 		PROPERTY1(std::vector<std::string>, tex_coord_names, GET_REF);
 
 	public:

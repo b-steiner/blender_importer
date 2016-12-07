@@ -1,3 +1,2 @@
-C:\Users\bsteiner\Downloads\blender\blender
-
-REM for /D %%i in (C:\Users\bsteiner\Downloads\blender\*) do start /wait %%i\blender.exe --background -y -P OriginalFiles\save.py
+cd ..
+for /D %%i in (C:\Users\bsteiner\Downloads\blender\*) do start /wait %%i\blender.exe --background -y -P OriginalFiles\save.py

@@ -714,6 +714,38 @@ mesh* importer::parse_mesh(uint64_t pptr)
 		normals[i] = bli_vector3((float)(((double)noPtr[0]) / l), (float)(((double)noPtr[1]) / l), (float)(((double)noPtr[2]) / l));
 	}
 
+	#pragma region Find uv layer
+
+	std::string data_ident = "fdata";
+	if (m_version_int >= 263)
+		data_ident = "ldata";
+
+	//UV Layers
+	std::vector<char*> uv_layer_ptr;
+	auto custom_data_layer_addr = RPtr(ptr + strc->fields()[data_ident]->offset() + custom_data_strc->fields()["*layers"]->offset());
+	if (custom_data_layer_addr != 0)
+	{
+		char* custom_data_layer_ptr = m_address_to_fileblock[custom_data_layer_addr];
+		//Check number of uv layers
+		uint32_t layer_count = *((uint32_t*)(custom_data_layer_ptr + 12 + m_ptr_size));
+		custom_data_layer_ptr += 16 + m_ptr_size;
+
+		for (unsigned int i = 0; i < layer_count; i++)
+		{
+			int32_t type = R<int32_t>(custom_data_layer_ptr + custom_data_layer_strc->fields()["type"]->offset());
+			if ((m_version_int < 263 && type == 5) || (m_version_int >= 263 && type == 16)) //UV
+			{
+				auto uv_layer_addr = RPtr(custom_data_layer_ptr + custom_data_layer_strc->fields()["*data"]->offset());
+				uv_layer_ptr.push_back(m_address_to_fileblock[uv_layer_addr] + 16 + m_ptr_size);
+				result_mesh->tex_coord_names().push_back(std::string(custom_data_layer_ptr + custom_data_layer_strc->fields()["name"]->offset()));
+			}
+
+			custom_data_layer_ptr += custom_data_layer_size;
+		}
+	}
+
+	#pragma endregion
+
 	#pragma region Face Information < 263
 
 	if (m_version_int < 263)
@@ -722,16 +754,10 @@ mesh* importer::parse_mesh(uint64_t pptr)
 		triangles = faceCount;
 
 		char* mfacePtr = m_address_to_fileblock[RPtr(ptr + strc->fields()["*mface"]->offset())] + 16 + m_ptr_size;
-		char* mtfacePtr = nullptr;
-		uint64_t mtfaceAddr = RPtr(ptr + strc->fields()["*mtface"]->offset());
-		if (mtfaceAddr != 0)
-		{
-			mtfacePtr = m_address_to_fileblock[mtfaceAddr] + 16 + m_ptr_size;
-		}
 
 		indices.reserve(faceCount * 4);
 		faceNormals = new bli_vector3[faceCount];
-		if (mtfacePtr != nullptr)
+		for (int i = 0; i < uv_layer_ptr.size(); i++)
 		{
 			std::vector<bli_vector2> inituv;
 			inituv.reserve(faceCount * 4);
@@ -746,8 +772,6 @@ mesh* importer::parse_mesh(uint64_t pptr)
 		sdna_struct* mtfaceStrc = m_sdna[m_name_to_sdna_idx["MTFace"]];
 		uint32_t mfaceSize = m_sdna_type_sizes[strc->fields()["*mface"]->type_idx()];
 		uint32_t mtfaceSize = m_sdna_type_sizes[strc->fields()["*mtface"]->type_idx()];
-
-		char* uvPtr = mtfacePtr + mtfaceStrc->fields()["uv"]->offset();
 		
 		unsigned int indexCount = 0;
 
@@ -775,13 +799,12 @@ mesh* importer::parse_mesh(uint64_t pptr)
 				faceLength[i] = 3;
 			}
 
-
-			if (mtfacePtr != nullptr) // Load uv if necessary
+			for (int uvi = 0; uvi < uv_layer_ptr.size(); uvi++)
 			{
-				float* uvPtr = (float*)(mtfacePtr + i * mtfaceSize + mtfaceStrc->fields()["uv"]->offset());
+				float* uv_ptr = (float*)(uv_layer_ptr[uvi] + uvi * mtfaceStrc->fields()["uv"]->offset());
 
-				for (unsigned int j = 0; j < faceLength[i]; j++)
-					faceUvs[0].push_back(bli_vector2(uvPtr[2 * j], uvPtr[2 * j + 1]));
+				for (unsigned int uvj = 0; uvj < faceLength[i]; uvj++)
+					faceUvs[uvi].push_back(bli_vector2(uv_ptr[2 * uvj], uv_ptr[2 * uvj + 1]));
 			}
 
 			//Calculate face normal + read face flag
@@ -807,34 +830,6 @@ mesh* importer::parse_mesh(uint64_t pptr)
 
 		char* mpolyPtr = m_address_to_fileblock[RPtr(ptr + strc->fields()["*mpoly"]->offset())] + 16 + m_ptr_size;
 		char* mloopPtr = m_address_to_fileblock[RPtr(ptr + strc->fields()["*mloop"]->offset())] + 16 + m_ptr_size;
-
-		//UV Layers
-		std::vector<char*> uv_layer_ptr; //= RPtr(ptr + strc->fields()["*mloopuv"]->offset());
-		auto custom_data_layer_addr = RPtr(ptr + strc->fields()["ldata"]->offset() + custom_data_strc->fields()["*layers"]->offset());
-		//char* mloopuvPtr = nullptr;
-		if (custom_data_layer_addr != 0)
-		{
-			char* custom_data_layer_ptr = m_address_to_fileblock[custom_data_layer_addr];
-			//Check number of uv layers
-			uint32_t layer_count = *((uint32_t*)(custom_data_layer_ptr + 12 + m_ptr_size));
-			custom_data_layer_ptr += 16 + m_ptr_size;
-
-			for (int i = 0; i < layer_count; i++)
-			{
-				int32_t type = R<int32_t>(custom_data_layer_ptr + custom_data_layer_strc->fields()["type"]->offset());
-				if (type == 16) //UV
-				{
-					auto uv_layer_addr = RPtr(custom_data_layer_ptr + custom_data_layer_strc->fields()["*data"]->offset());
-					uv_layer_ptr.push_back(m_address_to_fileblock[uv_layer_addr] + 16 + m_ptr_size);
-					result_mesh->tex_coord_names().push_back(std::string(custom_data_layer_ptr + custom_data_layer_strc->fields()["name"]->offset()));
-				}
-
-				custom_data_layer_ptr += custom_data_layer_size;
-			}
-
-			//mloopuvPtr = m_address_to_fileblock[mloopuvAddr] + 16 + m_ptr_size;
-			//hasUvs = true;
-		}
 
 		uint64_t mpolySize = m_sdna_type_sizes[strc->fields()["*mpoly"]->type_idx()];
 		uint64_t mloopSize = m_sdna_type_sizes[strc->fields()["*mloop"]->type_idx()];
@@ -1092,6 +1087,8 @@ material* importer::parse_material(uint64_t pptr)
 
 			if (texAddr != 0)
 			{
+				std::string uv_name(mtexPtr + mtexStrc->fields()["uvname"]->offset());
+
 				char* texPtr = m_address_to_fileblock[texAddr] + 16 + m_ptr_size;
 				uint64_t imaAddr = RPtr(texPtr + texStrc->fields()["*ima"]->offset());
 
@@ -1136,11 +1133,16 @@ material* importer::parse_material(uint64_t pptr)
 					{
 						result_material->textures()[mapping_target::diffuse] = result_texture;
 						result_material->texture_influence()[mapping_target::diffuse] = R<float>(mtexPtr + mtexStrc->fields()["colfac"]->offset());
+						result_material->texture_uv_name()[mapping_target::diffuse] = uv_name;
 					}
 					if ((mapTo & 0x02) != 0)
 					{
 						result_material->textures()[mapping_target::normals] = result_texture;
-						result_material->texture_influence()[mapping_target::normals] = R<float>(mtexPtr + mtexStrc->fields()["norfac"]->offset());
+						auto fac = R<float>(mtexPtr + mtexStrc->fields()["norfac"]->offset());
+						if (m_version_int == 260)
+							fac *= -1.0f; // This is due to a bug in 2.60 and 2.60a
+						result_material->texture_influence()[mapping_target::normals] = fac;
+						result_material->texture_uv_name()[mapping_target::normals] = uv_name;
 					}
 				}
 				else
@@ -1190,7 +1192,7 @@ light_source* importer::parse_light_source(uint64_t ptr)
 	float angle = R<float>(lampPtr + lampStrc->fields()["spotsize"]->offset());
 
 	if (m_version_int < 270)
-		angle = angle / 180.0f * M_PI;
+		angle = angle / 180.0f * (float)M_PI;
 
 	light->angle(angle);
 
@@ -1282,7 +1284,7 @@ animation* importer::parse_animation(uint64_t ptr)
 		std::vector<interpolation_mode> interp;
 		interp.reserve(bezt_count);
 
-		for (int bezi = 0; bezi < bezt_count; bezi++)
+		for (unsigned int bezi = 0; bezi < bezt_count; bezi++)
 		{
 			auto current_bezt = bezt_data + bezi * bezt_size;
 
@@ -1444,28 +1446,33 @@ bool importer::check_structure(const std::string& _path)
 	result &= check_structure("Mesh", "totvert", "int");
 	result &= check_structure("Mesh", "*mvert", "MVert");
 	result &= check_structure("Mesh", "**mat", "Material");
-	result &= check_structure("Mesh", "totface", "int", 0, 263);
-	result &= check_structure("Mesh", "*mface", "MFace", 0, 263);
-	result &= check_structure("Mesh", "*mtface", "MTFace", 0, 263);
-	result &= check_structure("Mesh", "totpoly", "int", 264);
-	result &= check_structure("Mesh", "*mpoly", "MPoly", 264);
-	result &= check_structure("Mesh", "*mloop", "MLoop", 264);
-	result &= check_structure("Mesh", "*mloopuv", "MLoopUV", 264);
+	result &= check_structure("Mesh", "totface", "int", 0, 262);
+	result &= check_structure("Mesh", "*mface", "MFace", 0, 262);
+	result &= check_structure("Mesh", "*mtface", "MTFace", 0, 262);
+	result &= check_structure("Mesh", "totpoly", "int", 263);
+	result &= check_structure("Mesh", "*mpoly", "MPoly", 263);
+	result &= check_structure("Mesh", "*mloop", "MLoop", 263);
+	result &= check_structure("Mesh", "*mloopuv", "MLoopUV", 263);
+	result &= check_structure("Mesh", "fdata", "CustomData", 0, 262);
+	result &= check_structure("Mesh", "ldata", "CustomData", 263);
 
-	result &= check_structure("MPoly", "loopstart", "int", 264);
-	result &= check_structure("MPoly", "totloop", "int", 264);
-	result &= check_structure("MPoly", "flag", "char", 264);
-	result &= check_structure("MLoop", "v", "int", 264);
-	result &= check_structure("MLoopUV", "uv", "float", 264);
+	result &= check_structure("CustomData", "*layers", "CustomDataLayer");
+	result &= check_structure("CustomDataLayer", "type", "int");
+	result &= check_structure("CustomDataLayer", "name", "char");
+	result &= check_structure("CustomDataLayer", "*data", "void");
 
-	result &= check_structure("MFace", "v1", "int", 0, 263);
-	result &= check_structure("MFace", "v2", "int", 0, 263);
-	result &= check_structure("MFace", "v3", "int", 0, 263);
-	result &= check_structure("MFace", "v4", "int", 0, 263);
-	result &= check_structure("MFace", "flag", "char", 0, 263);
-	result &= check_structure("MTFace", "uv", "float", 0, 263);
+	result &= check_structure("MPoly", "loopstart", "int", 263);
+	result &= check_structure("MPoly", "totloop", "int", 263);
+	result &= check_structure("MPoly", "flag", "char", 263);
+	result &= check_structure("MLoop", "v", "int", 263);
+	result &= check_structure("MLoopUV", "uv", "float", 263);
 
-	
+	result &= check_structure("MFace", "v1", "int", 0, 262);
+	result &= check_structure("MFace", "v2", "int", 0, 262);
+	result &= check_structure("MFace", "v3", "int", 0, 262);
+	result &= check_structure("MFace", "v4", "int", 0, 262);
+	result &= check_structure("MFace", "flag", "char", 0, 262);
+	result &= check_structure("MTFace", "uv", "float", 0, 262);	
 
 	result &= check_structure("Material", "r", "float");
 	result &= check_structure("Material", "g", "float");
@@ -1483,6 +1490,7 @@ bool importer::check_structure(const std::string& _path)
 
 	result &= check_structure("MTex", "*tex", "Tex");
 	result &= check_structure("MTex", "mapto", "short");
+	result &= check_structure("MTex", "uvname", "char");
 	result &= check_structure("Tex", "*ima", "Image");
 	result &= check_structure("Image", "name", "char");
 	result &= check_structure("Image", "colorspace_settings", "ColorManagedColorspaceSettings", 264);

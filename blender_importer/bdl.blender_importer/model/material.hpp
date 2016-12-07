@@ -66,13 +66,14 @@ BEGIN_BDL_BLI
 
 		typedef std::unordered_map<mapping_target, texture*> mapping_texture_map;
 		typedef std::unordered_map<mapping_target, float> mapping_float_map;
+		typedef std::unordered_map<mapping_target, std::string> mapping_string_map;
 
 		//! Stores the textures used in this material
 		PROPERTY1(mapping_texture_map, textures, GET_REF);
-
+		//! Stores the influence factor for each texture target. This will have different meanings depending on the target
 		PROPERTY1(mapping_float_map, texture_influence, GET_REF);
-
-		PROPERTY2(std::string, uv_name, GET_CONST_REF, SET);
+		//! Stores the name of the uv coordinate layer for each texture target. This is the same name present in mesh::tex_coord_names
+		PROPERTY1(mapping_string_map, texture_uv_name, GET_REF);
 
 	public:
 		/*! \brief Initializes a new instance of the material class
